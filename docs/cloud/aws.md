@@ -5,10 +5,14 @@
 
 A practical reference for AWS account identity, IAM Identity Center authentication, common services, EC2, S3, IAM, VPC, Lambda, and RDS.
 
+## Safety
+
 > [!WARNING]
 > AWS CLI commands act against the credentials, account, region, and profile currently in use. Verify all four before making a change, especially when profiles have similar names across development and production accounts.
 
-## Account and resource model
+## Quick reference
+
+### Account and resource model
 
 | Concept | Purpose |
 |---|---|
@@ -21,7 +25,7 @@ A practical reference for AWS account identity, IAM Identity Center authenticati
 
 Use multiple accounts to separate environments and security boundaries rather than placing every workload into one account.
 
-## Common services
+### Common services
 
 | Area | Services |
 |---|---|
@@ -34,7 +38,7 @@ Use multiple accounts to separate environments and security boundaries rather th
 | Integration | SQS, SNS, EventBridge, Step Functions, API Gateway |
 | Infrastructure as code | CloudFormation, AWS CDK, Service Catalog |
 
-## CLI setup and version
+### CLI setup and version
 
 ```bash
 aws --version
@@ -45,7 +49,7 @@ aws configure get region --profile <profile>
 
 Use named profiles instead of repeatedly overwriting the default profile.
 
-## IAM Identity Center authentication
+### IAM Identity Center authentication
 
 Configure a profile using the interactive wizard:
 
@@ -74,7 +78,7 @@ aws sso login --profile <profile> --use-device-code
 
 Prefer IAM Identity Center, role assumption, workload identity, and other short-lived credentials over long-lived IAM user access keys.
 
-## Verify identity before every change
+### Verify identity before every change
 
 ```bash
 aws sts get-caller-identity --profile <profile>
@@ -92,7 +96,7 @@ aws sts get-caller-identity
 > [!CAUTION]
 > Environment variables override profile-file settings in many AWS SDK and CLI scenarios. Inspect `AWS_PROFILE`, `AWS_REGION`, `AWS_DEFAULT_REGION`, and credential variables when behavior is unexpected.
 
-## Output, queries, and pagination
+### Output, queries, and pagination
 
 ```bash
 aws <service> <operation> help
@@ -112,7 +116,7 @@ aws ec2 describe-instances \
 
 Do not use `--no-paginate` on large inventories unless you understand the resulting API and output volume.
 
-## Amazon S3
+### Amazon S3
 
 List buckets and objects:
 
@@ -153,7 +157,7 @@ aws s3api create-bucket \
 
 The `us-east-1` API has special create-bucket behavior; verify the current command reference when automating bucket creation across Regions.
 
-## Amazon EC2
+### Amazon EC2
 
 Inventory:
 
@@ -186,7 +190,7 @@ aws ec2 terminate-instances --instance-ids <instance-id>
 > [!DANGER]
 > Instance termination can delete EBS volumes whose `DeleteOnTermination` flag is enabled. Confirm snapshots, data ownership, Auto Scaling behavior, and replacement dependencies first.
 
-## Systems Manager Session Manager
+### Systems Manager Session Manager
 
 List managed instances and start a session:
 
@@ -197,7 +201,7 @@ aws ssm start-session --target <instance-id>
 
 Session Manager can reduce the need for inbound SSH exposure when the instance, IAM role, agent, and network path are correctly configured.
 
-## IAM
+### IAM
 
 Read-only inspection:
 
@@ -220,7 +224,7 @@ aws iam simulate-principal-policy \
 
 Avoid creating IAM users for applications. Use roles and temporary credentials. For human access, prefer IAM Identity Center.
 
-## Role assumption
+### Role assumption
 
 ```bash
 aws sts assume-role \
@@ -230,7 +234,7 @@ aws sts assume-role \
 
 The command returns temporary credentials. Prefer profile-based role configuration, credential processes, or workload federation over manually exporting tokens.
 
-## VPC networking
+### VPC networking
 
 Inventory:
 
@@ -273,7 +277,7 @@ aws ec2 describe-security-group-rules \
 
 Avoid broad inbound access from `0.0.0.0/0` or `::/0` unless public exposure is explicitly required and protected by additional controls.
 
-## Elastic Load Balancing
+### Elastic Load Balancing
 
 ```bash
 aws elbv2 describe-load-balancers
@@ -284,7 +288,7 @@ aws elbv2 describe-target-health --target-group-arn <target-group-arn>
 
 Target health often provides the fastest explanation for an apparently healthy load balancer that is not serving traffic.
 
-## AWS Lambda
+### AWS Lambda
 
 ```bash
 aws lambda list-functions
@@ -313,7 +317,7 @@ aws lambda update-function-code \
   --publish
 ```
 
-## Amazon RDS
+### Amazon RDS
 
 ```bash
 aws rds describe-db-instances
@@ -341,7 +345,7 @@ aws rds delete-db-instance \
 > [!DANGER]
 > Avoid `--skip-final-snapshot` unless data destruction is explicitly approved and recoverability is not required. Check deletion protection, replicas, cluster membership, and application dependencies.
 
-## CloudWatch and CloudTrail
+### CloudWatch and CloudTrail
 
 ```bash
 aws cloudwatch list-metrics --namespace <namespace>
@@ -353,7 +357,7 @@ aws cloudtrail lookup-events --max-results 50
 
 CloudTrail lookup is useful for recent management events but does not replace a properly configured organization trail or event data store.
 
-## Tagging and inventory
+### Tagging and inventory
 
 ```bash
 aws resourcegroupstaggingapi get-resources
@@ -363,7 +367,9 @@ aws resourcegroupstaggingapi get-resources \
 
 Tagging should support ownership, environment, application, cost allocation, data classification, and lifecycle automation.
 
-## Troubleshooting checklist
+## Troubleshooting workflow
+
+### Troubleshooting checklist
 
 1. Run `aws sts get-caller-identity`.
 2. Confirm profile and Region.
@@ -383,7 +389,9 @@ env | grep '^AWS_'
 
 Debug logs can contain request metadata, account identifiers, endpoints, and signed-request details. Sanitize them before sharing.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [AWS CLI version 2 user guide](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html)
 - [IAM Identity Center authentication with AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html)

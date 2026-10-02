@@ -5,7 +5,13 @@
 
 A practical reference for leaf-spine topology, capacity planning, routing, failure behavior, oversubscription, and common design choices.
 
-## Topology
+## Safety
+
+Validate capacity, path diversity, and failure behavior against the actual hardware and traffic model. Inspect the underlay and overlay before changing routing or links; staged changes must preserve an alternate path and management access.
+
+## Quick reference
+
+### Topology
 
 A leaf-spine fabric is a two-tier Clos topology:
 
@@ -20,7 +26,7 @@ Traffic between endpoints on different leaves follows a predictable path:
 endpoint -> leaf -> spine -> leaf -> endpoint
 ```
 
-## Why use leaf-spine
+### Why use leaf-spine
 
 - predictable hop count and latency;
 - multiple equal-cost paths;
@@ -29,7 +35,7 @@ endpoint -> leaf -> spine -> leaf -> endpoint
 - strong fit for east-west application traffic;
 - automation-friendly, repeatable topology.
 
-## Routed underlay
+### Routed underlay
 
 Modern fabrics commonly use Layer 3 point-to-point links between leaf and spine switches.
 
@@ -43,7 +49,7 @@ Typical choices:
 
 A routed underlay removes spanning tree from the leaf-to-spine fabric. Layer 2 loop prevention may still be required on server-facing bonds, multichassis links, legacy VLAN domains, or attached access networks.
 
-## Equal-Cost Multipath
+### Equal-Cost Multipath
 
 Equal-Cost Multipath (ECMP) distributes flows across available spine paths.
 
@@ -64,7 +70,7 @@ show forwarding route <prefix>
 show interfaces counters rate
 ```
 
-## Capacity and oversubscription
+### Capacity and oversubscription
 
 For one leaf:
 
@@ -84,7 +90,7 @@ oversubscription       = 1.5:1
 
 Consider real traffic patterns, not only port speed. Storage, backup, replication, AI, virtualization, and east-west service traffic can produce very different requirements.
 
-## Scaling limits
+### Scaling limits
 
 The number of leaves supported by a spine tier is limited primarily by:
 
@@ -98,7 +104,7 @@ The number of leaves supported by a spine tier is limited primarily by:
 
 Adding a spine increases available uplink capacity only when every participating leaf can connect to it.
 
-## BGP underlay pattern
+### BGP underlay pattern
 
 A common eBGP design uses:
 
@@ -120,7 +126,7 @@ show bfd peers
 
 Avoid accepting or advertising unrestricted prefixes in the fabric underlay.
 
-## Overlay options
+### Overlay options
 
 A routed underlay can support an overlay such as VXLAN with BGP EVPN.
 
@@ -142,7 +148,7 @@ Keep underlay and overlay troubleshooting separate:
 5. confirm VXLAN or encapsulation state;
 6. confirm MAC, ARP/ND, and VRF forwarding.
 
-## Server multihoming
+### Server multihoming
 
 Common choices include:
 
@@ -154,7 +160,7 @@ Common choices include:
 
 Multichassis designs introduce state synchronization, split-brain handling, peer links, and failure cases that must be tested explicitly.
 
-## Border and service leaves
+### Border and service leaves
 
 Specialized leaf roles may include:
 
@@ -166,7 +172,7 @@ Specialized leaf roles may include:
 
 Do not create unnecessary hairpin paths through a distant service leaf without understanding bandwidth and failure impact.
 
-## Failure behavior
+### Failure behavior
 
 | Failure | Expected effect in a healthy design |
 |---|---|
@@ -179,7 +185,7 @@ Do not create unnecessary hairpin paths through a distant service leaf without u
 
 Test both hard failures and partial failures such as packet loss, unidirectional links, MTU mismatch, and high error rates.
 
-## Maximum Transmission Unit
+### Maximum Transmission Unit
 
 The underlay must support the overlay packet plus encapsulation overhead.
 
@@ -192,7 +198,7 @@ ping <destination> size <size> do-not-fragment
 
 Syntax varies by platform. Validate the maximum supported packet across host, leaf, spine, border, and appliance paths.
 
-## Cabling and addressing
+### Cabling and addressing
 
 Recommended practices:
 
@@ -204,7 +210,7 @@ Recommended practices:
 - record optic type, serial number, and expected distance;
 - validate polarity and lane mapping for parallel optics.
 
-## Monitoring
+### Monitoring
 
 Track at minimum:
 
@@ -220,50 +226,7 @@ Track at minimum:
 
 Streaming telemetry is often more useful than slow polling for microbursts and rapid convergence events.
 
-## Troubleshooting workflow
-
-### 1. Confirm scope
-
-Determine whether the issue affects one endpoint, one leaf, one rack, one spine path, one VRF, or the whole fabric.
-
-### 2. Check physical state
-
-```text
-show interfaces status
-show interfaces counters errors
-show interfaces transceiver
-```
-
-### 3. Check underlay adjacency
-
-```text
-show bgp summary
-show ospf neighbor
-show bfd peers
-```
-
-### 4. Check routes and ECMP
-
-```text
-show ip route <destination>
-show forwarding route <destination>
-```
-
-Confirm the expected number of next hops.
-
-### 5. Test loopback and path reachability
-
-Use sourced pings and traceroute from the relevant VRF or routing instance.
-
-### 6. Check overlay state
-
-Inspect EVPN routes, tunnel endpoints, VNIs, VRFs, MAC entries, and ARP or neighbor-discovery state.
-
-### 7. Compare intended and actual configuration
-
-Use the source of truth, generated configuration, and recent change history. Avoid making one-off CLI changes that create drift.
-
-## Common problems
+### Common problems
 
 | Symptom | Likely checks |
 |---|---|
@@ -275,7 +238,7 @@ Use the source of truth, generated configuration, and recent change history. Avo
 | Routes missing on one leaf | BGP policy, address family, max-prefix, session state |
 | MLAG-host failure | Peer link, keepalive, split brain, LACP state |
 
-## Design checklist
+### Design checklist
 
 - Define rack, leaf, spine, and pod failure domains.
 - Select underlay and overlay protocols deliberately.
@@ -289,7 +252,54 @@ Use the source of truth, generated configuration, and recent change history. Avo
 - Test maintenance and failure scenarios before production.
 - Monitor both control-plane convergence and data-plane forwarding.
 
-## References
+## Troubleshooting workflow
+
+### Troubleshooting workflow
+
+#### 1. Confirm scope
+
+Determine whether the issue affects one endpoint, one leaf, one rack, one spine path, one VRF, or the whole fabric.
+
+#### 2. Check physical state
+
+```text
+show interfaces status
+show interfaces counters errors
+show interfaces transceiver
+```
+
+#### 3. Check underlay adjacency
+
+```text
+show bgp summary
+show ospf neighbor
+show bfd peers
+```
+
+#### 4. Check routes and ECMP
+
+```text
+show ip route <destination>
+show forwarding route <destination>
+```
+
+Confirm the expected number of next hops.
+
+#### 5. Test loopback and path reachability
+
+Use sourced pings and traceroute from the relevant VRF or routing instance.
+
+#### 6. Check overlay state
+
+Inspect EVPN routes, tunnel endpoints, VNIs, VRFs, MAC entries, and ARP or neighbor-discovery state.
+
+#### 7. Compare intended and actual configuration
+
+Use the source of truth, generated configuration, and recent change history. Avoid making one-off CLI changes that create drift.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [RFC 7938: Use of BGP for Routing in Large-Scale Data Centers](https://www.rfc-editor.org/rfc/rfc7938)
 - [RFC 8365: A Network Virtualization Overlay Solution Using EVPN](https://www.rfc-editor.org/rfc/rfc8365)

@@ -10,7 +10,9 @@ Command availability and output vary by platform and release. This sheet intenti
 > [!WARNING]
 > Debugging, clearing protocol sessions, changing trunk VLANs, and modifying spanning-tree settings can interrupt production traffic. Capture the current state and confirm a rollback method first.
 
-## Device and system state
+## Quick reference
+
+### Device and system state
 
 ```text
 show version
@@ -28,7 +30,7 @@ show file systems
 show flash:
 ```
 
-## Interfaces
+### Interfaces
 
 ```text
 show interfaces status
@@ -55,7 +57,7 @@ Clear counters only when you have recorded the previous values:
 clear counters <interface>
 ```
 
-## VLANs and trunks
+### VLANs and trunks
 
 ```text
 show vlan brief
@@ -89,7 +91,7 @@ interface <interface>
 > [!CAUTION]
 > `switchport trunk allowed vlan <list>` replaces the effective allowed list in many workflows. Use `add` or `remove` only when that is the intended change, and verify with `show interfaces trunk`.
 
-## Spanning Tree Protocol
+### Spanning Tree Protocol
 
 ```text
 show spanning-tree summary
@@ -106,7 +108,7 @@ show debugging
 undebug all
 ```
 
-## EtherChannel and LACP
+### EtherChannel and LACP
 
 ```text
 show etherchannel summary
@@ -126,7 +128,7 @@ interface port-channel <number>
  description <description>
 ```
 
-## MAC, ARP, and neighbors
+### MAC, ARP, and neighbors
 
 ```text
 show mac address-table
@@ -144,7 +146,7 @@ Clear dynamic MAC entries only for a confirmed troubleshooting need:
 clear mac address-table dynamic interface <interface>
 ```
 
-## Layer 3 and routing
+### Layer 3 and routing
 
 ```text
 show ip route
@@ -158,7 +160,7 @@ show vrf
 show ip route vrf <vrf-name>
 ```
 
-## First-hop redundancy
+### First-hop redundancy
 
 ```text
 show standby brief
@@ -166,14 +168,14 @@ show standby
 show vrrp brief
 ```
 
-## Power over Ethernet
+### Power over Ethernet
 
 ```text
 show power inline
 show power inline <interface> detail
 ```
 
-## Configuration handling
+### Configuration handling
 
 ```text
 show archive config differences nvram:startup-config system:running-config
@@ -184,6 +186,8 @@ Before a risky remote change, use a rollback-capable workflow supported by the p
 
 ## Troubleshooting workflow
 
+### Troubleshooting workflow
+
 1. Confirm scope: one endpoint, one VLAN, one interface, or a wider failure.
 2. Check interface state and counters.
 3. Validate VLAN, trunk, and spanning-tree state.
@@ -191,6 +195,8 @@ Before a risky remote change, use a rollback-capable workflow supported by the p
 5. Check routing and access-control policy.
 6. Review logs with synchronized timestamps.
 7. Make the smallest reversible change and verify recovery.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
 
 ## Official references
 

@@ -5,10 +5,14 @@
 
 A practical reference for projects, stacks, configuration, previews, deployments, drift reconciliation, imports, state recovery, and CI usage.
 
+## Safety
+
 > [!WARNING]
 > Pulumi commands operate against the currently selected stack. Run `pulumi stack` and verify the organization, project, stack, cloud account, and region before changing infrastructure.
 
-## Core concepts
+## Quick reference
+
+### Core concepts
 
 | Concept | Meaning |
 |---|---|
@@ -20,7 +24,7 @@ A practical reference for projects, stacks, configuration, previews, deployments
 | State | Pulumi's record of managed resources and their relationships |
 | Backend | Pulumi Cloud or a self-managed object-storage/filesystem backend |
 
-## Installation and identity
+### Installation and identity
 
 ```bash
 pulumi version
@@ -40,7 +44,7 @@ pulumi login file://<absolute-path>
 
 Do not casually switch backends. Confirm that the intended stacks exist in the destination backend before running an update.
 
-## Create a project
+### Create a project
 
 ```bash
 pulumi new
@@ -50,7 +54,7 @@ pulumi new <template> --name <project-name> --stack <stack-name>
 
 Common templates can target AWS, Azure, Google Cloud, Kubernetes, TypeScript, Python, Go, .NET, Java, or YAML.
 
-## Stack management
+### Stack management
 
 ```bash
 pulumi stack ls
@@ -78,7 +82,7 @@ pulumi stack output <output-name> --show-secrets
 > [!WARNING]
 > `--show-secrets` writes decrypted values to the terminal and potentially to shell history, CI logs, or screen recordings.
 
-## Configuration and secrets
+### Configuration and secrets
 
 ```bash
 pulumi config
@@ -104,7 +108,7 @@ pulumi config cp --dest <destination-stack>
 
 Prefer workload identity, OpenID Connect, service-account impersonation, or short-lived credentials over long-lived cloud keys.
 
-## Preview changes
+### Preview changes
 
 ```bash
 pulumi preview
@@ -123,7 +127,7 @@ pulumi preview --expect-no-changes
 
 This is useful for drift or policy checks, but it will also fail for intentional pending changes.
 
-## Deploy changes
+### Deploy changes
 
 ```bash
 pulumi up
@@ -149,7 +153,7 @@ pulumi up --target-dependents --target <resource-urn>
 
 Targeted updates can leave the stack partially converged. Follow with a full preview and update.
 
-## Refresh and drift
+### Refresh and drift
 
 Inspect differences between Pulumi state and the provider:
 
@@ -167,7 +171,7 @@ pulumi refresh
 > [!WARNING]
 > `pulumi refresh` changes Pulumi state to match the provider. Review the preview carefully so that accidental out-of-band changes are not silently accepted.
 
-## Import existing resources
+### Import existing resources
 
 Interactive import:
 
@@ -189,7 +193,7 @@ pulumi import --file <import-file.json>
 
 After import, add the generated resource definition to the Pulumi program and run `pulumi preview` to ensure there is no replacement or unexpected update.
 
-## State backup and recovery
+### State backup and recovery
 
 Export state before manual state work:
 
@@ -215,7 +219,7 @@ pulumi state repair
 > [!CAUTION]
 > State commands bypass normal resource lifecycle behavior. Export a backup first, understand the resource dependencies, and use them only for recovery or carefully planned migrations.
 
-## Resource protection
+### Resource protection
 
 Resources created with the `protect` option cannot be deleted until protection is removed. For an emergency state-only change:
 
@@ -225,7 +229,7 @@ pulumi state unprotect <resource-urn>
 
 Prefer changing the program and deploying normally when possible.
 
-## Logs and troubleshooting
+### Logs and troubleshooting
 
 ```bash
 pulumi logs
@@ -247,7 +251,7 @@ pulumi preview --logtostderr -v=3
 
 Higher verbosity can expose provider requests or sensitive values. Sanitize logs before sharing them.
 
-## Destroy and remove a stack
+### Destroy and remove a stack
 
 Preview destruction:
 
@@ -270,7 +274,7 @@ pulumi stack rm <stack>
 > [!DANGER]
 > `pulumi destroy` deletes managed infrastructure. Verify the selected stack and cloud identity, inspect protected resources, confirm backups, and understand retained external dependencies before proceeding.
 
-## CI/CD baseline
+### CI/CD baseline
 
 Typical pull-request validation:
 
@@ -295,7 +299,16 @@ Recommended controls:
 - retain update history and deployment logs;
 - run a post-deployment preview or health check.
 
-## References
+## Troubleshooting workflow
+
+1. Confirm the selected stack, backend, cloud identity, and failed operation.
+2. Inspect stack history, outputs, and the previous update without changing state.
+3. Collect provider errors and timestamps, and compare code and configuration with the previous deployment.
+4. Review a preview for drift and unintended replacements before any update or state repair.
+5. Apply the smallest reviewed correction, then inspect the update result and service health.
+6. Record the change, state-backup location, and rollback or recovery procedure.
+
+## Official references
 
 - [Pulumi CLI command reference](https://www.pulumi.com/docs/iac/cli/commands/)
 - [Pulumi stacks](https://www.pulumi.com/docs/iac/concepts/stacks/)

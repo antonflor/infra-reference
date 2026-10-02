@@ -10,7 +10,9 @@ A quick reference for inspecting and operating containers, images, networks, vol
 > [!WARNING]
 > `rm`, `prune`, and Compose commands using `--volumes` can permanently remove containers or data. Inspect the target first and verify backups before deleting named volumes.
 
-## Environment and status
+## Quick reference
+
+### Environment and status
 
 ```bash
 docker version
@@ -19,7 +21,7 @@ docker context show
 docker system df
 ```
 
-## Containers
+### Containers
 
 ```bash
 # List containers
@@ -58,7 +60,7 @@ docker inspect <container>
 docker rm <container>
 ```
 
-## Images
+### Images
 
 ```bash
 docker image ls
@@ -76,7 +78,7 @@ Remove an image:
 docker image rm <image>:<tag>
 ```
 
-## Networks
+### Networks
 
 ```bash
 docker network ls
@@ -87,7 +89,7 @@ docker network disconnect <network> <container>
 docker port <container>
 ```
 
-## Volumes
+### Volumes
 
 ```bash
 docker volume ls
@@ -102,7 +104,7 @@ docker ps --all --filter volume=<volume>
 docker volume rm <volume>
 ```
 
-## Docker Compose v2
+### Docker Compose v2
 
 Compose v2 uses the integrated `docker compose` command. The older `docker-compose` executable is legacy syntax.
 
@@ -146,7 +148,7 @@ docker compose down --volumes
 docker compose down --rmi local
 ```
 
-## Cleanup
+### Cleanup
 
 Preview disk usage first:
 
@@ -162,6 +164,8 @@ docker volume prune
 
 ## Troubleshooting workflow
 
+### Troubleshooting workflow
+
 ```bash
 docker ps --all
 docker inspect <container>
@@ -176,6 +180,8 @@ Check the container exit code and health status:
 ```bash
 docker inspect --format '{{.State.Status}} exit={{.State.ExitCode}} health={{if .State.Health}}{{.State.Health.Status}}{{end}}' <container>
 ```
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
 
 ## Official references
 

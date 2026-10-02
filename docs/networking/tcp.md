@@ -5,7 +5,13 @@
 
 Transmission Control Protocol (TCP) provides a connection-oriented byte stream with ordered delivery, retransmission, flow control, and congestion control. Applications use TCP ports to identify services at each endpoint.
 
-## Connection lifecycle
+## Safety
+
+Inspect sockets, counters, and both traffic directions before changing a service or firewall. Packet captures can contain application data; scope captures and handle them according to operational policy.
+
+## Quick reference
+
+### Connection lifecycle
 
 A connection normally begins with the three-way handshake:
 
@@ -17,7 +23,7 @@ client -> server  ACK
 
 Normal close commonly exchanges FIN and ACK segments in each direction. A reset (`RST`) terminates a connection immediately and usually indicates rejection, an invalid connection state, or an application or firewall action.
 
-## Important header fields
+### Important header fields
 
 | Field | Purpose |
 |---|---|
@@ -29,7 +35,7 @@ Normal close commonly exchanges FIN and ACK segments in each direction. A reset 
 | Checksum | Detects corruption across header and payload |
 | Options | MSS, window scaling, timestamps, selective acknowledgment |
 
-## Reliability behavior
+### Reliability behavior
 
 - Missing data is retransmitted.
 - Duplicate acknowledgments can indicate loss or reordering.
@@ -39,7 +45,7 @@ Normal close commonly exchanges FIN and ACK segments in each direction. A reset 
 
 TCP guarantees ordered delivery to the application, but it does not preserve application message boundaries. Applications must define their own framing.
 
-## Read-only inspection
+### Read-only inspection
 
 Linux examples:
 
@@ -57,7 +63,7 @@ tcpdump -ni <interface> 'tcp and host <ip-address>'
 tcpdump -ni <interface> 'tcp port <port>'
 ```
 
-## Common symptoms
+### Common symptoms
 
 | Symptom | Likely checks |
 |---|---|
@@ -70,6 +76,8 @@ tcpdump -ni <interface> 'tcp port <port>'
 
 ## Troubleshooting workflow
 
+### Troubleshooting workflow
+
 1. Confirm name resolution and destination address.
 2. Confirm the server is listening on the expected address and port.
 3. Verify routing and firewall policy in both directions.
@@ -78,6 +86,8 @@ tcpdump -ni <interface> 'tcp port <port>'
 6. Compare application logs with packet timestamps.
 7. Test from another source or path before changing production settings.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [RFC 9293: Transmission Control Protocol](https://www.rfc-editor.org/rfc/rfc9293)

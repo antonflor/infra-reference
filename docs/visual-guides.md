@@ -7,7 +7,13 @@ These Mermaid diagrams supplement the detailed references with quick topology, l
 
 The collection is deliberately limited to concepts where visual relationships improve comprehension. Command-oriented cloud, CLI, and utility references remain text-first rather than receiving decorative diagrams.
 
-## Spanning tree: root and alternate path
+## Safety
+
+Treat each diagram as a conceptual simplification. Confirm topology, release behavior, and failure assumptions using the linked operational guide before changing a live system.
+
+## Quick reference
+
+### Spanning tree: root and alternate path
 
 Related reference: [networking/spanning-tree.md](networking/spanning-tree.md)
 
@@ -30,7 +36,7 @@ flowchart TB
 
 The exact blocked side depends on root-path cost and bridge or port tie-breakers. The diagram does not imply that the same physical port always blocks.
 
-## Leaf-spine fabric
+### Leaf-spine fabric
 
 Related reference: [networking/leaf-spine.md](networking/leaf-spine.md)
 
@@ -63,7 +69,7 @@ flowchart TB
 
 A healthy routed fabric normally loses capacity rather than reachability when one spine fails, assuming every leaf still has another working spine path.
 
-## Pulumi change lifecycle
+### Pulumi change lifecycle
 
 Related reference: [automation/pulumi.md](automation/pulumi.md)
 
@@ -97,7 +103,7 @@ flowchart LR
 
 A preview is not a substitute for validating the selected stack, cloud identity, region, policy controls, and rollback plan.
 
-## Talos and Omni management boundary
+### Talos and Omni management boundary
 
 Related references: [kubernetes-platforms/talos-linux.md](kubernetes-platforms/talos-linux.md) and [kubernetes-platforms/omni.md](kubernetes-platforms/omni.md)
 
@@ -132,7 +138,7 @@ flowchart LR
 
 The two paths are intentionally different. Direct standalone procedures should not be assumed to work unchanged on an Omni-managed machine.
 
-## Omni machine-to-cluster lifecycle
+### Omni machine-to-cluster lifecycle
 
 Related reference: [kubernetes-platforms/omni.md](kubernetes-platforms/omni.md)
 
@@ -167,7 +173,7 @@ flowchart LR
 
 Out-of-band deletion of provider-managed or control-plane machines can leave Omni waiting for resources that no longer exist and can break etcd quorum.
 
-## Linux boot sequence
+### Linux boot sequence
 
 Related reference: [linux/linux-boot.md](linux/linux-boot.md)
 
@@ -197,7 +203,7 @@ flowchart TD
 
 A failure should be investigated at the earliest incomplete stage: firmware entry, bootloader, kernel, initramfs, root filesystem, or userspace service activation.
 
-## Git branch and pull-request workflow
+### Git branch and pull-request workflow
 
 Related reference: [development/git.md](development/git.md)
 
@@ -230,7 +236,7 @@ flowchart LR
 
 Use `git status`, staged and unstaged diffs, and a backup branch before destructive history repair.
 
-## Spec-driven development lifecycle
+### Spec-driven development lifecycle
 
 Related reference: [development/spec-driven-development.md](development/spec-driven-development.md)
 
@@ -269,7 +275,7 @@ flowchart LR
 
 The diagram is conceptual. A small low-risk change may combine stages, while a production or regulated change may require additional security, architecture, migration, and approval gates.
 
-## Operational troubleshooting sequence
+### Operational troubleshooting sequence
 
 Related guidance: [../STYLE_GUIDE.md](../STYLE_GUIDE.md)
 
@@ -299,3 +305,20 @@ flowchart TD
 ```
 
 Avoid using a diagram merely to restate a flat command list. Mermaid is most valuable for relationships, paths, decisions, state transitions, and failure domains.
+
+## Troubleshooting workflow
+
+1. Identify the affected service and select the diagram closest to the observed topology or lifecycle.
+2. Inspect actual system state using the linked operational reference before changing it.
+3. Collect logs, counters, and timestamps at the boundaries shown in the diagram.
+4. Compare actual behavior with the diagram and document any platform-specific differences.
+5. Apply the smallest supported correction and verify the original service path.
+6. Record the change, recovery result, and rollback state.
+
+## Official references
+
+- [RFC 7938: BGP in large-scale data centers](https://www.rfc-editor.org/rfc/rfc7938)
+- [Pulumi CLI reference](https://www.pulumi.com/docs/iac/cli/commands/)
+- [Talos documentation](https://docs.siderolabs.com/talos)
+- [Omni documentation](https://docs.siderolabs.com/omni)
+- [Git documentation](https://git-scm.com/docs)

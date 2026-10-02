@@ -5,7 +5,13 @@
 
 REST is an architectural style, not a wire protocol. APIs vary, so treat these as interoperable defaults rather than universal rules.
 
-## HTTP methods
+## Safety
+
+Verify the endpoint, authentication scope, and resource before sending a request. GET examples inspect state; POST, PUT, PATCH, and DELETE can change it. Avoid logging credentials and retry state-changing requests only when the API provides safe retry semantics.
+
+## Quick reference
+
+### HTTP methods
 
 | Method | Typical use | Safe | Idempotent |
 |---|---|---:|---:|
@@ -19,7 +25,7 @@ REST is an architectural style, not a wire protocol. APIs vary, so treat these a
 
 **Safe** means the method is intended not to change server state. **Idempotent** means repeating the same request has the same intended effect as sending it once.
 
-## Common status codes
+### Common status codes
 
 | Code | Meaning | Typical use |
 |---:|---|---|
@@ -42,7 +48,7 @@ REST is an architectural style, not a wire protocol. APIs vary, so treat these a
 | `503` | Service Unavailable | Temporarily unavailable or overloaded |
 | `504` | Gateway Timeout | Upstream timed out |
 
-## Request example
+### Request example
 
 ```http
 POST /v1/users HTTP/1.1
@@ -58,7 +64,7 @@ Idempotency-Key: <unique-request-id>
 }
 ```
 
-## Response example
+### Response example
 
 ```http
 HTTP/1.1 201 Created
@@ -73,7 +79,7 @@ ETag: "7b9f6a"
 }
 ```
 
-## curl patterns
+### curl patterns
 
 ```bash
 curl --fail-with-body --silent --show-error \
@@ -101,7 +107,7 @@ curl --dump-header response.headers \
   https://api.example.com/health
 ```
 
-## Resource and URL design
+### Resource and URL design
 
 - Use stable nouns: `/users/123`, not `/getUser?id=123`.
 - Keep identifiers opaque to clients.
@@ -116,7 +122,7 @@ Example:
 GET /v1/incidents?status=open&severity=critical&sort=-created_at&limit=50
 ```
 
-## Pagination
+### Pagination
 
 Cursor pagination is generally more stable than offsets for changing datasets:
 
@@ -129,7 +135,7 @@ Cursor pagination is generally more stable than offsets for changing datasets:
 
 Do not promise a meaningful total count unless the service can provide it efficiently and consistently.
 
-## Concurrency and retries
+### Concurrency and retries
 
 Use ETags and conditional requests to prevent lost updates:
 
@@ -145,7 +151,7 @@ If-Match: "version-7"
 
 Retry only when the operation is safe or idempotent, or when the API supports an idempotency key. Use bounded exponential backoff with jitter. Honor `Retry-After` on `429` and `503` responses.
 
-## Authentication and authorization
+### Authentication and authorization
 
 - Require HTTPS.
 - Keep authentication separate from authorization.
@@ -154,7 +160,7 @@ Retry only when the operation is safe or idempotent, or when the API supports an
 - Never log bearer tokens, session cookies, API keys, passwords, or full sensitive payloads.
 - Apply authorization at the resource and action level, not only at the route level.
 
-## Error format
+### Error format
 
 Use one consistent machine-readable structure. RFC 9457 Problem Details is a strong default:
 
@@ -168,7 +174,7 @@ Use one consistent machine-readable structure. RFC 9457 Problem Details is a str
 }
 ```
 
-## Observability
+### Observability
 
 Include or propagate:
 
@@ -178,11 +184,20 @@ Include or propagate:
 - Latency, throughput, saturation, and error metrics.
 - Upstream dependency timing.
 
-## Versioning and compatibility
+### Versioning and compatibility
 
 Prefer additive changes where possible. Removing fields, changing field meaning, tightening validation, or altering enum behavior can break clients even when the URL version is unchanged. Publish a deprecation timeline and instrument usage before removal.
 
-## References
+## Troubleshooting workflow
+
+1. Confirm the endpoint, HTTP method, resource, request ID, and failure time.
+2. Inspect the status code, response headers, and body before retrying a state-changing request.
+3. Correlate client, gateway, and service logs using request IDs and timestamps.
+4. Compare authentication scope, payload, API version, and concurrency headers with the documented contract.
+5. Apply the smallest client or service correction and use a controlled request with documented retry behavior.
+6. Verify the response and resulting resource state; record the change and rollback plan.
+
+## Official references
 
 - [HTTP Semantics — RFC 9110](https://www.rfc-editor.org/rfc/rfc9110)
 - [HTTP Caching — RFC 9111](https://www.rfc-editor.org/rfc/rfc9111)

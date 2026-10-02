@@ -5,10 +5,14 @@
 
 A practical reference for repository setup, branches, commits, remotes, inspection, undo operations, rebasing, and recovery.
 
+## Safety
+
 > [!WARNING]
 > Commands such as `reset --hard`, `clean`, forced pushes, and branch deletion can permanently remove uncommitted or unreferenced work. Inspect state and create a backup branch before destructive recovery.
 
-## Identify the current repository state
+## Quick reference
+
+### Identify the current repository state
 
 ```bash
 git status --short --branch
@@ -17,7 +21,7 @@ git remote -v
 git log --oneline --decorate --graph -20
 ```
 
-## Configure identity
+### Configure identity
 
 ```bash
 git config --global user.name '<name>'
@@ -33,7 +37,7 @@ git config user.name '<name>'
 git config user.email '<email>'
 ```
 
-## Create or clone a repository
+### Create or clone a repository
 
 ```bash
 git init
@@ -41,7 +45,7 @@ git clone <repository-url>
 git clone --branch <branch> <repository-url>
 ```
 
-## Inspect changes
+### Inspect changes
 
 ```bash
 git status
@@ -53,7 +57,7 @@ git show <commit>
 git blame <file>
 ```
 
-## Stage and commit
+### Stage and commit
 
 ```bash
 git add <file>
@@ -65,7 +69,7 @@ git commit --amend
 
 Use `git add --patch` to review each hunk and avoid accidentally committing unrelated changes.
 
-## Branches and switching
+### Branches and switching
 
 ```bash
 git branch
@@ -82,7 +86,7 @@ Force-delete a local branch only after confirming its commits are preserved else
 git branch -D <branch>
 ```
 
-## Remotes
+### Remotes
 
 ```bash
 git remote -v
@@ -92,7 +96,7 @@ git fetch --all --prune
 git remote show origin
 ```
 
-## Pull, merge, and push
+### Pull, merge, and push
 
 ```bash
 git fetch origin
@@ -104,7 +108,7 @@ git push
 
 Prefer `git pull --ff-only` when you do not want Git to create an implicit merge commit or rebase.
 
-## Merge a branch
+### Merge a branch
 
 ```bash
 git switch <target-branch>
@@ -127,7 +131,7 @@ Abort an in-progress merge:
 git merge --abort
 ```
 
-## Rebase
+### Rebase
 
 ```bash
 git fetch origin
@@ -146,7 +150,7 @@ git rebase -i <base-commit>
 > [!CAUTION]
 > Rebase rewrites commit IDs. Avoid rebasing shared branches unless the collaboration workflow explicitly expects it.
 
-## Stash
+### Stash
 
 ```bash
 git stash push -m '<description>'
@@ -160,7 +164,7 @@ git stash drop stash@{0}
 
 Use `apply` instead of `pop` when you want to keep the stash until the result is verified.
 
-## Undo uncommitted changes
+### Undo uncommitted changes
 
 Restore one file from the index:
 
@@ -185,7 +189,7 @@ git clean -fd
 > [!DANGER]
 > `git clean -fd` deletes untracked files and directories. Ignored files require additional flags and can include build artifacts, local configuration, or secrets.
 
-## Undo committed changes safely
+### Undo committed changes safely
 
 Create a new commit that reverses an earlier commit:
 
@@ -196,7 +200,7 @@ git revert <oldest-commit>^..<newest-commit>
 
 Revert is generally safer for shared branches because it preserves history.
 
-## Reset local history
+### Reset local history
 
 Inspect first:
 
@@ -223,7 +227,7 @@ git reset --hard <commit>
 > [!DANGER]
 > `git reset --hard` discards tracked working-tree changes. Create a backup branch and verify the target commit before running it.
 
-## Cherry-pick
+### Cherry-pick
 
 ```bash
 git cherry-pick <commit>
@@ -237,7 +241,7 @@ Apply a commit without immediately committing it:
 git cherry-pick --no-commit <commit>
 ```
 
-## Tags
+### Tags
 
 ```bash
 git tag
@@ -247,7 +251,7 @@ git push origin <tag>
 git push origin --tags
 ```
 
-## Find a regression with bisect
+### Find a regression with bisect
 
 ```bash
 git bisect start
@@ -269,7 +273,7 @@ Automate with a test command:
 git bisect run <test-command>
 ```
 
-## Recover lost commits
+### Recover lost commits
 
 ```bash
 git reflog
@@ -279,7 +283,7 @@ git branch recovery/<description> <reflog-commit>
 
 The reflog is local and expires over time. Create a branch as soon as the desired commit is found.
 
-## Submodules
+### Submodules
 
 ```bash
 git submodule status
@@ -288,7 +292,7 @@ git submodule sync --recursive
 git clone --recurse-submodules <repository-url>
 ```
 
-## Worktrees
+### Worktrees
 
 ```bash
 git worktree list
@@ -300,7 +304,7 @@ git worktree prune
 
 Worktrees are useful when multiple branches must be checked out simultaneously without repeated stashing.
 
-## Safer force push
+### Safer force push
 
 ```bash
 git fetch origin
@@ -310,7 +314,7 @@ git push --force-with-lease origin <branch>
 > [!CAUTION]
 > `--force-with-lease` is safer than `--force`, but it still rewrites remote history. Confirm that the branch is intended to be rewritten and that no collaborator work will be lost.
 
-## Useful aliases
+### Useful aliases
 
 ```bash
 git config --global alias.st 'status --short --branch'
@@ -318,7 +322,9 @@ git config --global alias.lg 'log --oneline --decorate --graph --all'
 git config --global alias.unstage 'restore --staged --'
 ```
 
-## Troubleshooting checklist
+## Troubleshooting workflow
+
+### Troubleshooting checklist
 
 1. Run `git status --short --branch`.
 2. Confirm the current branch and remote.
@@ -328,7 +334,9 @@ git config --global alias.unstage 'restore --staged --'
 6. Create a backup branch before reset, rebase, or force-push recovery.
 7. Prefer revert for changes already shared with others.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [Git documentation](https://git-scm.com/docs)
 - [Pro Git book](https://git-scm.com/book/en/v2)

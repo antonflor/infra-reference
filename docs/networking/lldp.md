@@ -5,7 +5,13 @@
 
 Link Layer Discovery Protocol (LLDP) lets directly connected devices advertise identity, port, management, and capability information to each other. It is useful for topology discovery, cabling validation, inventory, voice endpoint provisioning, and troubleshooting.
 
-## What LLDP exchanges
+## Safety
+
+Inspect neighbors and cabling before changing discovery settings. LLDP can disclose topology and management details; balance disclosure policy against endpoint, voice, and inventory dependencies.
+
+## Quick reference
+
+### What LLDP exchanges
 
 LLDP information is encoded as Type-Length-Value elements, commonly including:
 
@@ -18,9 +24,9 @@ LLDP information is encoded as Type-Length-Value elements, commonly including:
 
 LLDP is link-local. Advertisements are not routed beyond the directly connected segment.
 
-## Read-only inspection
+### Read-only inspection
 
-### Cisco IOS and IOS XE
+#### Cisco IOS and IOS XE
 
 ```text
 show lldp
@@ -30,7 +36,7 @@ show lldp interface <interface>
 show lldp traffic
 ```
 
-### Arista EOS
+#### Arista EOS
 
 ```text
 show lldp
@@ -38,7 +44,7 @@ show lldp neighbors
 show lldp neighbors detail
 ```
 
-### Junos
+#### Junos
 
 ```text
 show lldp
@@ -47,7 +53,7 @@ show lldp neighbors detail
 show lldp statistics
 ```
 
-## Common configuration examples
+### Common configuration examples
 
 > [!CAUTION]
 > LLDP syntax and defaults vary by vendor and release. Confirm the exact platform behavior before changing a production interface.
@@ -78,7 +84,15 @@ Junos per-interface enablement:
 set protocols lldp interface <interface>
 ```
 
+### Security guidance
+
+LLDP can disclose hostnames, platform details, management addresses, and topology information. Disable transmission where disclosure is not appropriate, such as untrusted external handoffs, while considering operational and voice-device requirements.
+
+Do not assume LLDP should always be disabled on ordinary endpoint-facing ports. Phones, hypervisors, access points, automation systems, and inventory tooling may rely on it. Apply policy according to the actual endpoint and trust boundary.
+
 ## Troubleshooting workflow
+
+### Troubleshooting workflow
 
 1. Confirm the physical interface is up and error-free.
 2. Verify LLDP is enabled globally and on both interface directions.
@@ -87,12 +101,8 @@ set protocols lldp interface <interface>
 5. Confirm intermediate devices, media converters, or hypervisors are not hiding or rewriting discovery information.
 6. Check for LLDP-MED requirements on phones and other media endpoints.
 
-## Security guidance
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
 
-LLDP can disclose hostnames, platform details, management addresses, and topology information. Disable transmission where disclosure is not appropriate, such as untrusted external handoffs, while considering operational and voice-device requirements.
-
-Do not assume LLDP should always be disabled on ordinary endpoint-facing ports. Phones, hypervisors, access points, automation systems, and inventory tooling may rely on it. Apply policy according to the actual endpoint and trust boundary.
-
-## References
+## Official references
 
 - [IEEE 802.1AB overview](https://1.ieee802.org/maintenance/802-1ab/)

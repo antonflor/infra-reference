@@ -5,7 +5,13 @@
 
 A quick reference for cluster context, workloads, logs, rollouts, node maintenance, and troubleshooting.
 
-## Context and namespaces
+## Safety
+
+Confirm the current context, namespace, and target resources before a change. Diff manifests before applying them. Deletion, scaling, rollout changes, and node drains can disrupt workloads; inspect availability and storage requirements first.
+
+## Quick reference
+
+### Context and namespaces
 
 ```bash
 kubectl version --client
@@ -17,7 +23,7 @@ kubectl config set-context --current --namespace=<namespace>
 kubectl get namespaces
 ```
 
-## Discover resources
+### Discover resources
 
 ```bash
 kubectl api-resources
@@ -26,7 +32,7 @@ kubectl explain deployment
 kubectl explain deployment.spec.template.spec.containers
 ```
 
-## List and inspect
+### List and inspect
 
 ```bash
 kubectl get nodes -o wide
@@ -38,18 +44,20 @@ kubectl describe pod <pod> -n <namespace>
 kubectl get pod <pod> -n <namespace> -o yaml
 ```
 
-## Apply and diff
+### Apply and diff
 
 ```bash
 kubectl diff -f <manifest-or-directory>
 kubectl apply -f <manifest-or-directory>
+kubectl get -f <manifest-or-directory>
+# WARNING: deletion removes these resources and can interrupt workloads.
 kubectl delete -f <manifest-or-directory>
 kubectl apply --server-side -f <manifest-or-directory>
 ```
 
 Prefer declarative manifests over imperative production changes. Run `kubectl diff` before applying when possible.
 
-## Logs and process access
+### Logs and process access
 
 ```bash
 kubectl logs <pod> -n <namespace>
@@ -60,7 +68,7 @@ kubectl exec -it <pod> -n <namespace> -- /bin/sh
 kubectl cp <namespace>/<pod>:/remote/path ./local-path
 ```
 
-## Rollouts and scaling
+### Rollouts and scaling
 
 ```bash
 kubectl rollout status deployment/<name> -n <namespace>
@@ -72,7 +80,7 @@ kubectl set image deployment/<name> \
   -n <namespace>
 ```
 
-## Port forwarding and temporary diagnostics
+### Port forwarding and temporary diagnostics
 
 ```bash
 kubectl port-forward service/<service> 8080:<service-port> -n <namespace>
@@ -87,7 +95,7 @@ kubectl debug node/<node> -it --image=ubuntu
 
 Use only trusted diagnostic images approved by your organization.
 
-## Resource usage
+### Resource usage
 
 ```bash
 kubectl top nodes
@@ -97,7 +105,7 @@ kubectl top pod <pod> -n <namespace> --containers
 
 The Metrics API must be available for `kubectl top`.
 
-## Node maintenance
+### Node maintenance
 
 ```bash
 kubectl cordon <node>
@@ -110,7 +118,7 @@ kubectl uncordon <node>
 > [!WARNING]
 > `drain` evicts workloads and `--delete-emptydir-data` discards ephemeral data. Check PodDisruptionBudgets, local storage, singleton workloads, and replacement capacity first.
 
-## Labels, annotations, and taints
+### Labels, annotations, and taints
 
 ```bash
 kubectl label node <node> <key>=<value>
@@ -120,7 +128,7 @@ kubectl taint node <node> <key>=<value>:NoSchedule
 kubectl taint node <node> <key>:NoSchedule-
 ```
 
-## JSONPath and custom columns
+### JSONPath and custom columns
 
 ```bash
 kubectl get pods -A \
@@ -130,7 +138,9 @@ kubectl get nodes \
   -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.nodeInfo.kubeletVersion}{"\n"}{end}'
 ```
 
-## Common troubleshooting sequence
+## Troubleshooting workflow
+
+### Common troubleshooting sequence
 
 ```bash
 kubectl get pod <pod> -n <namespace> -o wide
@@ -143,7 +153,9 @@ kubectl get networkpolicies -n <namespace>
 
 Check scheduling events, image pulls, probes, resource limits, service selectors, endpoint population, DNS, and network policy before restarting workloads blindly.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [kubectl reference](https://kubernetes.io/docs/reference/kubectl/)
 - [Debug applications](https://kubernetes.io/docs/tasks/debug/debug-application/)

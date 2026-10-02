@@ -5,16 +5,20 @@
 
 A practical reference for understanding Layer 2 loop prevention, identifying the root bridge, interpreting port roles and states, and troubleshooting common spanning-tree failures.
 
+## Safety
+
 > [!WARNING]
 > Spanning-tree changes can move the root bridge, reconverge many VLANs, or create a Layer 2 loop. Capture the current topology and verify the intended root, alternate paths, PortFast scope, and rollback plan before changing production switches.
 
-## Why spanning tree exists
+## Quick reference
+
+### Why spanning tree exists
 
 Redundant Layer 2 links are useful for availability, but Ethernet frames do not contain a hop limit. An active Layer 2 loop can cause broadcast storms, duplicate frames, MAC-address-table instability, and severe control-plane load.
 
 Spanning Tree Protocol (STP) exchanges Bridge Protocol Data Units (BPDUs), elects a root bridge, calculates a loop-free tree, and places redundant paths into a nonforwarding role until they are needed.
 
-## Common variants
+### Common variants
 
 | Variant | Purpose |
 |---|---|
@@ -26,9 +30,9 @@ Spanning Tree Protocol (STP) exchanges Bridge Protocol Data Units (BPDUs), elect
 
 Do not assume every vendor implements the same defaults or per-VLAN behavior. Verify the operating mode and interoperability requirements on every switch family.
 
-## Election logic
+### Election logic
 
-### Root bridge
+#### Root bridge
 
 The switch with the lowest Bridge ID becomes the root bridge.
 
@@ -40,7 +44,7 @@ Bridge ID selection is based on:
 
 A lower numerical value wins.
 
-### Root port
+#### Root port
 
 Each nonroot switch selects one root port: the port with the best path toward the root bridge.
 
@@ -51,11 +55,11 @@ Selection commonly considers:
 3. lowest upstream port priority;
 4. lowest upstream port number.
 
-### Designated port
+#### Designated port
 
 Each Layer 2 segment selects one designated port that provides the best path toward the root. Other redundant ports become alternate, backup, or blocking/discarding depending on the mode.
 
-## Port roles
+### Port roles
 
 | Role | Meaning |
 |---|---|
@@ -65,9 +69,9 @@ Each Layer 2 segment selects one designated port that provides the best path tow
 | Backup | Backup path to the same shared segment |
 | Disabled | Administratively or operationally unavailable |
 
-## Port states
+### Port states
 
-### Classic STP
+#### Classic STP
 
 | State | Behavior |
 |---|---|
@@ -77,7 +81,7 @@ Each Layer 2 segment selects one designated port that provides the best path tow
 | Forwarding | Learns and forwards traffic |
 | Disabled | Does not participate |
 
-### RSTP and MSTP
+#### RSTP and MSTP
 
 | State | Behavior |
 |---|---|
@@ -85,7 +89,7 @@ Each Layer 2 segment selects one designated port that provides the best path tow
 | Learning | Learns source MAC addresses |
 | Forwarding | Learns and forwards traffic |
 
-## Inspect the current topology
+### Inspect the current topology
 
 ```text
 show spanning-tree
@@ -110,7 +114,7 @@ Questions to answer before changing anything:
 - Are speed, duplex, VLAN, and trunk settings consistent on both ends?
 - Did the topology recently reconverge?
 
-## Select the root bridge
+### Select the root bridge
 
 Inspect first:
 
@@ -137,7 +141,7 @@ Bridge priority is normally configured in increments supported by the platform, 
 > [!CAUTION]
 > Do not allow access-layer switches to win root election by accident. Place the primary and secondary root near the Layer 3 gateway or according to the intended traffic path.
 
-## Port cost and port priority
+### Port cost and port priority
 
 Inspect the current decision:
 
@@ -156,7 +160,7 @@ interface <interface>
 
 Prefer root placement and sound topology design over aggressive timer tuning.
 
-## PortFast and edge ports
+### PortFast and edge ports
 
 PortFast allows an endpoint-facing port to move rapidly to forwarding instead of waiting through normal convergence stages.
 
@@ -175,7 +179,7 @@ interface <interface>
 > [!DANGER]
 > Do not enable PortFast on links to switches, bridges, hubs, or unknown downstream devices. A redundant connection can transition immediately to forwarding and create a loop.
 
-## BPDU Guard
+### BPDU Guard
 
 BPDU Guard protects edge ports by placing a port into an error-disabled state if it receives a BPDU.
 
@@ -203,7 +207,7 @@ show logging
 
 Investigate the downstream device and cabling before recovering the port.
 
-## Root Guard
+### Root Guard
 
 Root Guard prevents a downstream-facing port from accepting superior BPDUs and becoming the path to a new root bridge.
 
@@ -214,7 +218,7 @@ interface <interface>
 
 Use Root Guard where a downstream switch must never become root. Do not use it on a port that may legitimately become a root port after a failure.
 
-## Loop Guard
+### Loop Guard
 
 Loop Guard helps prevent a non-designated port from moving to forwarding when BPDUs unexpectedly stop arriving.
 
@@ -225,14 +229,14 @@ interface <interface>
 
 Loop Guard is commonly useful on point-to-point switch links. Validate platform interaction with Unidirectional Link Detection (UDLD), EtherChannel, and the selected spanning-tree mode.
 
-## BPDU Filter
+### BPDU Filter
 
 BPDU Filter suppresses BPDU transmission or processing depending on how and where it is configured.
 
 > [!DANGER]
 > BPDU Filter can effectively remove spanning-tree protection and create silent loops. Avoid interface-level BPDU filtering unless the design specifically requires it and the consequences are fully understood.
 
-## Rapid PVST+ example
+### Rapid PVST+ example
 
 Inspect current mode:
 
@@ -248,7 +252,7 @@ spanning-tree mode rapid-pvst
 
 Verify every participating switch supports the intended mode and interoperability behavior before changing a production domain.
 
-## MSTP concepts
+### MSTP concepts
 
 Multiple Spanning Tree Protocol maps VLANs to instances. Switches are in the same MST region only when their configuration identity matches, including:
 
@@ -277,7 +281,7 @@ show spanning-tree mst <instance-id>
 
 A mapping mismatch creates an MST region boundary even when the physical switches are adjacent.
 
-## EtherChannel interaction
+### EtherChannel interaction
 
 Spanning tree should treat a correctly formed EtherChannel as one logical link.
 
@@ -289,78 +293,7 @@ show spanning-tree interface port-channel <number> detail
 
 Member links must have consistent trunking, native VLAN, allowed VLANs, speed, duplex, and channel configuration. A partially formed channel can produce unexpected spanning-tree behavior.
 
-## Troubleshooting workflow
-
-### 1. Confirm the blast radius
-
-```text
-show logging
-show spanning-tree detail
-show processes cpu
-show interfaces counters errors
-```
-
-Look for topology changes, MAC flapping, high CPU, broadcast growth, interface errors, and repeated link transitions.
-
-### 2. Identify the root and blocked paths
-
-```text
-show spanning-tree root
-show spanning-tree vlan <vlan-id>
-```
-
-Compare actual roles against the intended diagram.
-
-### 3. Verify BPDU flow
-
-```text
-show spanning-tree vlan <vlan-id> detail
-show spanning-tree interface <interface> detail
-```
-
-Run the detail command more than once and confirm BPDU counters increase on root, designated, and blocked/alternate links where expected.
-
-### 4. Check the physical link
-
-```text
-show interfaces <interface>
-show interfaces <interface> status
-show interfaces <interface> counters errors
-```
-
-Investigate duplex mismatch, CRC errors, drops, overloaded links, unidirectional failure, optics, cabling, and transceiver alarms.
-
-### 5. Check Layer 2 consistency
-
-```text
-show interfaces trunk
-show vlan brief
-show etherchannel summary
-show running-config interface <interface>
-```
-
-Confirm both ends agree on trunking, native VLAN, allowed VLANs, channel membership, and spanning-tree protections.
-
-### 6. Examine topology changes
-
-```text
-show spanning-tree detail
-show logging | include SPANTREE|LINK|LINEPROTO
-```
-
-Identify the interface generating repeated topology changes rather than treating the root switch as the source of every event.
-
-### 7. Debug only when necessary
-
-```text
-debug spanning-tree events
-debug spanning-tree bpdu
-```
-
-> [!CAUTION]
-> Debug commands can increase control-plane load and generate substantial output. Use logging buffers, limit the duration, and disable debugging after collecting evidence.
-
-## Common failure patterns
+### Common failure patterns
 
 | Symptom | Likely checks |
 |---|---|
@@ -372,7 +305,7 @@ debug spanning-tree bpdu
 | MST boundary appears | Region name, revision, VLAN-to-instance mapping |
 | Slow endpoint connectivity | Missing PortFast on a true endpoint port, authentication timing |
 
-## Design guidance
+### Design guidance
 
 - Choose the root and secondary root intentionally.
 - Keep the root close to the expected Layer 3 gateway and traffic path.
@@ -385,7 +318,82 @@ debug spanning-tree bpdu
 - Document expected root ports and alternate paths.
 - Test link, switch, and port-channel failures before production rollout.
 
-## References
+## Troubleshooting workflow
+
+### Troubleshooting workflow
+
+#### 1. Confirm the blast radius
+
+```text
+show logging
+show spanning-tree detail
+show processes cpu
+show interfaces counters errors
+```
+
+Look for topology changes, MAC flapping, high CPU, broadcast growth, interface errors, and repeated link transitions.
+
+#### 2. Identify the root and blocked paths
+
+```text
+show spanning-tree root
+show spanning-tree vlan <vlan-id>
+```
+
+Compare actual roles against the intended diagram.
+
+#### 3. Verify BPDU flow
+
+```text
+show spanning-tree vlan <vlan-id> detail
+show spanning-tree interface <interface> detail
+```
+
+Run the detail command more than once and confirm BPDU counters increase on root, designated, and blocked/alternate links where expected.
+
+#### 4. Check the physical link
+
+```text
+show interfaces <interface>
+show interfaces <interface> status
+show interfaces <interface> counters errors
+```
+
+Investigate duplex mismatch, CRC errors, drops, overloaded links, unidirectional failure, optics, cabling, and transceiver alarms.
+
+#### 5. Check Layer 2 consistency
+
+```text
+show interfaces trunk
+show vlan brief
+show etherchannel summary
+show running-config interface <interface>
+```
+
+Confirm both ends agree on trunking, native VLAN, allowed VLANs, channel membership, and spanning-tree protections.
+
+#### 6. Examine topology changes
+
+```text
+show spanning-tree detail
+show logging | include SPANTREE|LINK|LINEPROTO
+```
+
+Identify the interface generating repeated topology changes rather than treating the root switch as the source of every event.
+
+#### 7. Debug only when necessary
+
+```text
+debug spanning-tree events
+debug spanning-tree bpdu
+```
+
+> [!CAUTION]
+> Debug commands can increase control-plane load and generate substantial output. Use logging buffers, limit the duration, and disable debugging after collecting evidence.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [Cisco: Understand and Configure STP on Catalyst Switches](https://www.cisco.com/c/en/us/support/docs/lan-switching/spanning-tree-protocol/5234-5.html)
 - [Cisco: Troubleshoot STP Problems and Design Considerations](https://www.cisco.com/c/en/us/support/docs/lan-switching/spanning-tree-protocol/10556-16.html)

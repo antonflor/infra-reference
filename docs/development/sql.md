@@ -1,10 +1,20 @@
 # SQL Cheat Sheet
 
-## Introduction to SQL
+> **Status:** Legacy reference — technical validation pending
+
+A reference for Structured Query Language (SQL) queries, joins, aggregation, schema changes, and transactions. Examples use multiple database dialects; the worked schema and date-function examples use MySQL syntax.
+
+## Safety
+
+Inspect the affected rows and schema before changing data. UPDATE or DELETE without a suitable WHERE clause affects every row; DROP removes database objects. Use a tested backup and the transaction behavior of the actual database engine, including implicit commits for schema changes.
+
+## Quick reference
+
+### Introduction to SQL
 
 SQL (Structured Query Language) is a standard language for storing, manipulating, and retrieving data in databases. It works with relational databases like MySQL, PostgreSQL, SQL Server, and Oracle.
 
-## Basic SQL Commands
+### Basic SQL Commands
 
 - **SELECT**: Retrieves data from a database.
 - **INSERT INTO**: Inserts new data into a database.
@@ -18,7 +28,7 @@ SQL (Structured Query Language) is a standard language for storing, manipulating
 - **CREATE INDEX**: Creates an index (search key).
 - **DROP INDEX**: Deletes an index.
 
-## SELECT Statement
+### SELECT Statement
 
 **Basic SELECT**
 ```sql
@@ -40,25 +50,29 @@ SELECT * FROM table_name WHERE condition;
 SELECT DISTINCT column1 FROM table_name;
 ```
 
-## INSERT INTO Statement
+### INSERT INTO Statement
 
 ```sql
 INSERT INTO table_name (column1, column2) VALUES (value1, value2);
 ```
 
-## UPDATE Statement
+### UPDATE Statement
 
 ```sql
+SELECT * FROM table_name WHERE condition;
+-- WARNING: UPDATE changes all matching rows; review this selection first.
 UPDATE table_name SET column1 = value1, column2 = value2 WHERE condition;
 ```
 
-## DELETE Statement
+### DELETE Statement
 
 ```sql
+SELECT * FROM table_name WHERE condition;
+-- WARNING: DELETE removes all matching rows.
 DELETE FROM table_name WHERE condition;
 ```
 
-## JOIN Operations
+### JOIN Operations
 
 **INNER JOIN** — Returns rows with matching values in both tables
 ```sql
@@ -90,7 +104,7 @@ SELECT a.column1, b.column2 FROM table_name a, table_name b WHERE condition;
 SELECT columns FROM table1 CROSS JOIN table2;
 ```
 
-## Aggregate Functions
+### Aggregate Functions
 
 **COUNT**
 ```sql
@@ -123,7 +137,7 @@ SELECT column_name, COUNT(*) FROM table_name GROUP BY column_name;
 SELECT column_name, COUNT(*) FROM table_name GROUP BY column_name HAVING COUNT(*) > 5;
 ```
 
-## Sorting and Limiting
+### Sorting and Limiting
 
 **ORDER BY**
 ```sql
@@ -148,7 +162,7 @@ SELECT * FROM table_name WHERE ROWNUM <= 10;
 SELECT * FROM table_name LIMIT 10 OFFSET 20;
 ```
 
-## SQL Data Types
+### SQL Data Types
 
 - **Numeric**: INT, SMALLINT, BIGINT, DECIMAL, NUMERIC, FLOAT, REAL
 - **Character**: CHAR, VARCHAR, TEXT
@@ -156,7 +170,7 @@ SELECT * FROM table_name LIMIT 10 OFFSET 20;
 - **Boolean**: BOOLEAN (or TINYINT in MySQL)
 - **Binary**: BINARY, VARBINARY, BLOB
 
-## SQL Constraints
+### SQL Constraints
 
 - **NOT NULL**: Ensures that a column cannot have a NULL value.
 - **UNIQUE**: Ensures that all values in a column are different.
@@ -165,7 +179,7 @@ SELECT * FROM table_name LIMIT 10 OFFSET 20;
 - **CHECK**: Ensures that all values in a column satisfy a specific condition.
 - **DEFAULT**: Sets a default value for a column when no value is specified.
 
-## SQL Indexes
+### SQL Indexes
 
 **Creating an Index**
 ```sql
@@ -178,13 +192,16 @@ CREATE UNIQUE INDEX index_name ON table_name (column_name);
 ```
 
 **Dropping an Index**
+Inspect the target object and dependencies using the database engine’s schema catalog, and verify a restorable backup first.
+
 ```sql
+-- WARNING: this removes the named database object or stored column data.
 DROP INDEX index_name ON table_name;
 ```
 
 ---
 
-## Common SQL Command Examples
+### Common SQL Command Examples
 
 **Creating a Database**
 ```sql
@@ -192,7 +209,10 @@ CREATE DATABASE example_db;
 ```
 
 **Deleting a Database**
+Inspect the target object and dependencies using the database engine’s schema catalog, and verify a restorable backup first.
+
 ```sql
+-- WARNING: this removes the named database object or stored column data.
 DROP DATABASE example_db;
 ```
 
@@ -208,7 +228,10 @@ CREATE TABLE users (
 ```
 
 **Deleting a Table**
+Inspect the target object and dependencies using the database engine’s schema catalog, and verify a restorable backup first.
+
 ```sql
+-- WARNING: this removes the named database object or stored column data.
 DROP TABLE users;
 ```
 
@@ -218,7 +241,10 @@ ALTER TABLE users ADD COLUMN phone VARCHAR(20);
 ```
 
 **Deleting a Column from a Table**
+Inspect the target object and dependencies using the database engine’s schema catalog, and verify a restorable backup first.
+
 ```sql
+-- WARNING: this removes the named database object or stored column data.
 ALTER TABLE users DROP COLUMN phone;
 ```
 
@@ -241,11 +267,15 @@ INSERT INTO users (name, email, age) VALUES
 
 **Updating Data in a Table**
 ```sql
+SELECT * FROM users WHERE id = 1;
+-- WARNING: this changes the selected row.
 UPDATE users SET name = 'Jane Doe' WHERE id = 1;
 ```
 
 **Deleting Data from a Table**
 ```sql
+SELECT * FROM users WHERE id = 1;
+-- WARNING: this deletes the selected row.
 DELETE FROM users WHERE id = 1;
 ```
 
@@ -343,13 +373,16 @@ SELECT DATE_FORMAT(created_at, '%Y-%m') FROM users;  -- Format a date
 
 **Transactions**
 ```sql
+SELECT id, balance FROM accounts WHERE id IN (1, 2);
 START TRANSACTION;
+-- Review the selected accounts before changing balances.
 UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 UPDATE accounts SET balance = balance + 100 WHERE id = 2;
-COMMIT;
-
--- To undo:
-ROLLBACK;
+-- Inspect the pending result in this transaction.
+SELECT id, balance FROM accounts WHERE id IN (1, 2);
+-- Choose ONE: COMMIT to retain changes, or ROLLBACK before commit to undo them.
+-- COMMIT;
+-- ROLLBACK;
 ```
 
 **Views**
@@ -361,6 +394,23 @@ SELECT * FROM users WHERE status = 'active';
 -- Query a view like a table
 SELECT * FROM active_users;
 
--- Drop a view
+-- Inspect the view definition and dependencies before removal.
+-- WARNING: this removes the view definition.
 DROP VIEW active_users;
 ```
+
+## Troubleshooting workflow
+
+1. Confirm the database engine, version, schema, query, and error or slow-operation time.
+2. Inspect the affected rows, current transaction, locks, and execution plan using engine-specific read-only tools.
+3. Collect error codes, query timings, and database logs without exposing sensitive data.
+4. Compare schema, indexes, permissions, and transaction behavior with the intended query.
+5. Test the smallest correction on a disposable copy or in a transaction where the engine supports rollback.
+6. Verify result rows and application behavior before committing; record the change and recovery point.
+
+## Official references
+
+- [MySQL reference manual](https://dev.mysql.com/doc/refman/8.4/en/)
+- [MySQL transaction control](https://dev.mysql.com/doc/refman/8.4/en/commit.html)
+- [PostgreSQL SQL commands](https://www.postgresql.org/docs/current/sql-commands.html)
+- [SQL Server Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference)

@@ -5,7 +5,13 @@
 
 The Open Systems Interconnection (OSI) model is a seven-layer conceptual framework for discussing how applications communicate across networks. Real protocol implementations do not always map cleanly to one layer, but the model remains useful for design and troubleshooting.
 
-## The seven layers
+## Safety
+
+Use the model to organize evidence across layers. Confirm observed behavior before changing configuration; one symptom can have causes at several layers.
+
+## Quick reference
+
+### The seven layers
 
 | Layer | Name | Primary concerns | Common examples |
 |---:|---|---|---|
@@ -17,7 +23,7 @@ The Open Systems Interconnection (OSI) model is a seven-layer conceptual framewo
 | 2 | Data link | Local delivery, framing, MAC addressing, and switching | Ethernet, VLANs, STP, LACP, ARP/ND adjacency functions |
 | 1 | Physical | Signaling, media, connectors, optics, and bit transmission | Copper, fiber, radios, transceivers |
 
-## Encapsulation
+### Encapsulation
 
 Application data is wrapped as it moves down the stack:
 
@@ -31,7 +37,16 @@ application data
 
 The receiving system removes the corresponding headers and trailers as data moves upward.
 
-## Troubleshooting by layer
+### Practical guidance
+
+- Capture evidence at multiple layers before changing configuration.
+- Separate control-plane state from data-plane forwarding.
+- Use packet captures to confirm what is actually transmitted and received.
+- Treat the OSI model as a communication tool rather than a rigid implementation specification.
+
+## Troubleshooting workflow
+
+### Troubleshooting by layer
 
 | Symptom | Start checking |
 |---|---|
@@ -43,9 +58,8 @@ The receiving system removes the corresponding headers and trailers as data move
 
 Do not stop at the layer where a symptom appears. For example, an application timeout may be caused by packet loss, MTU problems, DNS, TLS, or the application itself.
 
-## Practical guidance
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
 
-- Capture evidence at multiple layers before changing configuration.
-- Separate control-plane state from data-plane forwarding.
-- Use packet captures to confirm what is actually transmitted and received.
-- Treat the OSI model as a communication tool rather than a rigid implementation specification.
+## Official references
+
+- [ITU-T X.200: OSI basic reference model](https://www.itu.int/rec/T-REC-X.200/en)

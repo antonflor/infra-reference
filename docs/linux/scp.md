@@ -5,7 +5,13 @@
 
 `scp` copies files over SSH. Current OpenSSH releases use the SFTP protocol for normal `scp` transfers by default, while retaining familiar command-line syntax.
 
-## Basic syntax
+## Safety
+
+Confirm the destination host, path, and available space before copying. Existing destination files can be overwritten; preserve needed copies and verify the host key rather than bypassing it.
+
+## Quick reference
+
+### Basic syntax
 
 ```text
 scp [options] <source> <destination>
@@ -29,7 +35,7 @@ Copy a directory recursively:
 scp -r <local-directory> <user>@<host>:<remote-directory>
 ```
 
-## Common options
+### Common options
 
 | Option | Purpose |
 |---|---|
@@ -51,7 +57,7 @@ scp -J <jump-user>@<jump-host> <file> <user>@<host>:<path>
 scp -p <user>@<host>:<remote-file> <local-path>
 ```
 
-## Safety guidance
+### Safety guidance
 
 > [!CAUTION]
 > Confirm the source and destination carefully, especially when running as a privileged user or copying directories recursively. Existing destination files can be overwritten.
@@ -62,7 +68,9 @@ scp -p <user>@<host>:<remote-file> <local-path>
 - Use `rsync` over SSH for resumable synchronization, deletion previews, and large directory trees.
 - Use `sftp` when an interactive file-transfer session is more appropriate.
 
-## Troubleshooting
+## Troubleshooting workflow
+
+### Troubleshooting
 
 Verbose connection output:
 
@@ -86,6 +94,8 @@ Common checks:
 - whether the server permits SFTP or requires legacy SCP behavior;
 - filename quoting and shell expansion.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [OpenSSH scp manual](https://man.openbsd.org/scp)

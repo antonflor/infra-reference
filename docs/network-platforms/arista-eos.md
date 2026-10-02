@@ -10,7 +10,9 @@ Command availability varies by EOS release and hardware platform. This sheet use
 > [!WARNING]
 > Clearing routing sessions, changing MLAG peer links, modifying trunks, or enabling debug output can interrupt production traffic. Capture state and validate a rollback plan first.
 
-## System state
+## Quick reference
+
+### System state
 
 ```text
 show version
@@ -26,7 +28,7 @@ show reload cause
 show extensions
 ```
 
-## Interfaces
+### Interfaces
 
 ```text
 show interfaces status
@@ -40,7 +42,7 @@ show running-config interfaces <interface>
 show transceiver <interface> detail
 ```
 
-## VLANs and trunks
+### VLANs and trunks
 
 ```text
 show vlan
@@ -71,7 +73,7 @@ interface <interface>
    switchport trunk allowed vlan <vlan-list>
 ```
 
-## Port-channels and LACP
+### Port-channels and LACP
 
 ```text
 show port-channel summary
@@ -88,7 +90,7 @@ interface <interface>
    channel-group <number> mode active
 ```
 
-## MLAG
+### MLAG
 
 ```text
 show mlag
@@ -108,7 +110,7 @@ Check these before changing MLAG:
 - VLAN consistency across peers;
 - orphaned ports and single-homed dependencies.
 
-## BGP
+### BGP
 
 ```text
 show ip bgp summary
@@ -128,7 +130,7 @@ clear ip bgp <neighbor-address> soft in
 clear ip bgp <neighbor-address> soft out
 ```
 
-## OSPF
+### OSPF
 
 ```text
 show ip ospf
@@ -138,7 +140,7 @@ show ip ospf database
 show ip route ospf
 ```
 
-## Routing, VRFs, MAC, and ARP
+### Routing, VRFs, MAC, and ARP
 
 ```text
 show ip route
@@ -152,7 +154,7 @@ show ip arp vrf <vrf-name>
 show lldp neighbors detail
 ```
 
-## Configuration sessions and rollback
+### Configuration sessions and rollback
 
 Use a configuration session for changes that benefit from an explicit diff:
 
@@ -172,6 +174,8 @@ Confirm the exact session and rollback behavior for the deployed EOS release bef
 
 ## Troubleshooting workflow
 
+### Troubleshooting workflow
+
 1. Verify system health and timestamps.
 2. Check interface state, optics, errors, and rates.
 3. Validate VLAN, trunk, spanning-tree, and port-channel consistency.
@@ -179,6 +183,8 @@ Confirm the exact session and rollback behavior for the deployed EOS release bef
 5. Confirm MAC, ARP, VRF, and route resolution.
 6. Inspect routing-protocol neighbors and policy.
 7. Make the smallest reversible change and verify both peers afterward.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
 
 ## Official references
 

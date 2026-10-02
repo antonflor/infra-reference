@@ -77,6 +77,12 @@ docs/cisco-contact-center/icm.md
 - Avoid renaming stable single-word files solely for cosmetic consistency.
 - When renaming or merging files, update the README, relative links, and documentation-quality checks in the same change.
 
+## Reference-sheet template
+
+Every guide under `docs/` follows the [cheat-sheet template](CONTRIBUTING.md#cheat-sheet-structure): title, honest review metadata, scope paragraph, `Safety`, `Quick reference`, `Troubleshooting workflow`, and `Official references`, in that order. Use level-three headings for topic subsections within the quick reference. Conceptual and visual guides use definitions, relationships, diagrams, and diagnostic steps rather than adding unnecessary commands.
+
+Keep existing topic-heading text when reorganizing sections so links to those topics continue to work. A structural edit alone does not count as technical revalidation.
+
 ## Required status metadata
 
 New or technically revalidated sheets must place these lines immediately below the title:

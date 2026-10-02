@@ -5,7 +5,13 @@
 
 A Clos network uses multiple switching stages and parallel paths to scale bandwidth and reduce the impact of individual link or switch failures. Modern leaf-spine data center fabrics are commonly implemented as folded-Clos topologies.
 
-## Core structure
+## Safety
+
+Validate capacity and failure assumptions against the actual topology and platform limits. Inspect link and route state before changing a fabric; parallel paths alone do not guarantee enough capacity during a failure.
+
+## Quick reference
+
+### Core structure
 
 | Stage | Purpose |
 |---|---|
@@ -15,7 +21,7 @@ A Clos network uses multiple switching stages and parallel paths to scale bandwi
 
 In a folded-Clos fabric, the ingress and egress stages are represented by the same leaf tier.
 
-## Design properties
+### Design properties
 
 - Multiple equal-cost paths can exist between leaves.
 - Capacity scales horizontally by adding links, leaves, or spines within platform limits.
@@ -23,7 +29,7 @@ In a folded-Clos fabric, the ingress and egress stages are represented by the sa
 - Oversubscription depends on the ratio of endpoint-facing bandwidth to fabric-facing bandwidth.
 - “Non-blocking” is a capacity-design target, not an automatic property of every Clos deployment.
 
-## Basic capacity model
+### Basic capacity model
 
 For one leaf switch:
 
@@ -41,7 +47,7 @@ Example:
 oversubscription       = 1.5:1
 ```
 
-## Operational considerations
+### Operational considerations
 
 - Connect every participating leaf to every spine in the same fabric tier when the design assumes full-path diversity.
 - Validate ECMP width, routing-table scale, forwarding-table scale, optics, cabling, power, and cooling.
@@ -49,10 +55,19 @@ oversubscription       = 1.5:1
 - Test full failures and partial failures such as packet loss, MTU mismatch, optic degradation, and unidirectional links.
 - Use a source of truth for addressing, ASNs, interface assignments, and cabling.
 
-## Relationship to leaf-spine
+### Relationship to leaf-spine
 
 A leaf-spine fabric is a common folded-Clos implementation. See [leaf-spine.md](leaf-spine.md) for routing, overlays, multihoming, and troubleshooting guidance.
 
-## References
+## Troubleshooting workflow
+
+1. Confirm whether the symptom affects one endpoint, leaf, path, or the whole fabric.
+2. Inspect physical links, installed next hops, routing adjacencies, and capacity without changing topology.
+3. Collect error, drop, utilization, and adjacency-transition evidence with timestamps.
+4. Compare cabling, addressing, routing policy, and capacity with the intended design.
+5. Correct one identified link or configuration fault while preserving alternate paths.
+6. Verify reachability and capacity under the expected failure model; record the change and rollback state.
+
+## Official references
 
 - [RFC 7938: Use of BGP for Routing in Large-Scale Data Centers](https://www.rfc-editor.org/rfc/rfc7938)

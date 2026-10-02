@@ -5,10 +5,14 @@
 
 A practical reference for the Linux boot sequence, kernel command line, initramfs, systemd targets, boot troubleshooting, modules, and recovery.
 
+## Safety
+
 > [!WARNING]
 > Bootloader, kernel, initramfs, filesystem, and module changes can leave a system unbootable. Preserve a known-good kernel, console access, backups, and a tested recovery path before making changes.
 
-## Boot sequence
+## Quick reference
+
+### Boot sequence
 
 1. **Firmware:** BIOS or UEFI initializes hardware and selects a boot entry.
 2. **Bootloader:** GRUB or another bootloader loads the kernel and initramfs.
@@ -17,7 +21,7 @@ A practical reference for the Linux boot sequence, kernel command line, initramf
 5. **PID 1:** The kernel starts the init process, commonly systemd.
 6. **Userspace:** systemd mounts filesystems, starts services, and reaches the configured target.
 
-## Identify the running system
+### Identify the running system
 
 ```bash
 uname -a
@@ -29,7 +33,7 @@ systemctl get-default
 systemctl is-system-running
 ```
 
-## Kernel and boot files
+### Kernel and boot files
 
 ```bash
 ls -lh /boot
@@ -51,7 +55,7 @@ Common files:
 
 Do not edit generated `grub.cfg` files directly unless the platform explicitly requires it. Change the source configuration and regenerate the file.
 
-## Kernel command line
+### Kernel command line
 
 Show current parameters:
 
@@ -73,7 +77,7 @@ Common temporary troubleshooting parameters:
 > [!CAUTION]
 > Kernel parameters differ by distribution, bootloader, initramfs implementation, and security configuration. Temporary console edits are safer than permanent changes while diagnosing an issue.
 
-## systemd boot targets
+### systemd boot targets
 
 ```bash
 systemctl list-units --type=target
@@ -87,7 +91,7 @@ systemctl isolate emergency.target
 > [!WARNING]
 > `systemctl isolate` stops units that are not required by the target and can disconnect remote sessions. Use console access for rescue operations.
 
-## Analyze boot performance
+### Analyze boot performance
 
 ```bash
 systemd-analyze
@@ -98,7 +102,7 @@ systemd-analyze plot > boot.svg
 
 `blame` shows activation time, not necessarily the root cause. Use `critical-chain` and logs to understand ordering and dependency delays.
 
-## Inspect boot logs
+### Inspect boot logs
 
 Current boot:
 
@@ -124,7 +128,7 @@ journalctl --list-boots
 
 If previous boots are unavailable, persistent journal storage may not be enabled.
 
-## Service failures during boot
+### Service failures during boot
 
 ```bash
 systemctl --failed
@@ -140,7 +144,7 @@ Reset a unit's failed state only after collecting evidence:
 systemctl reset-failed <unit>
 ```
 
-## Filesystem and mount failures
+### Filesystem and mount failures
 
 ```bash
 findmnt
@@ -163,7 +167,7 @@ sudo mount -av
 
 For noncritical network or removable mounts, options such as `nofail`, `_netdev`, or systemd automount behavior may prevent unnecessary boot failure, but they change availability semantics.
 
-## Initramfs inspection and rebuild
+### Initramfs inspection and rebuild
 
 Debian and Ubuntu:
 
@@ -184,7 +188,7 @@ Rebuild an initramfs when required storage, encryption, filesystem, or early-boo
 > [!WARNING]
 > Confirm the target kernel version and verify free space in `/boot` before rebuilding. Do not overwrite the only known-good boot image without a recovery option.
 
-## GRUB configuration
+### GRUB configuration
 
 Inspect defaults:
 
@@ -212,7 +216,7 @@ List firmware boot entries:
 sudo efibootmgr -v
 ```
 
-## Kernel packages
+### Kernel packages
 
 Debian and Ubuntu:
 
@@ -231,7 +235,7 @@ sudo grubby --info=ALL
 
 Keep at least one known-good previous kernel until the new kernel has booted and passed validation.
 
-## Kernel modules
+### Kernel modules
 
 ```bash
 lsmod
@@ -257,7 +261,7 @@ Module options commonly use:
 > [!CAUTION]
 > Removing storage, network, filesystem, or security modules can interrupt the running system. Inspect module dependencies with `modinfo` and test in a nonproduction environment.
 
-## sysctl runtime settings
+### sysctl runtime settings
 
 ```bash
 sysctl -a
@@ -275,7 +279,7 @@ Persistent settings are commonly stored under:
 
 Capture the old value and understand namespace or container interactions before changing kernel parameters.
 
-## Kernel and hardware information
+### Kernel and hardware information
 
 ```bash
 lscpu
@@ -288,7 +292,7 @@ cat /proc/interrupts
 cat /proc/modules
 ```
 
-## Common boot failure patterns
+### Common boot failure patterns
 
 | Symptom | Checks |
 |---|---|
@@ -300,7 +304,19 @@ cat /proc/modules
 | Service delays boot | `systemd-analyze critical-chain`, unit dependencies, DNS, network-online target |
 | UEFI cannot find bootloader | EFI System Partition, NVRAM entries, Secure Boot, bootloader installation |
 
-## Recovery workflow
+### Security controls affecting boot
+
+- UEFI Secure Boot can reject unsigned kernels or modules.
+- Kernel lockdown can restrict low-level access when Secure Boot is active.
+- SELinux and AppArmor can block userspace actions after the kernel boots.
+- LUKS encryption may require console input, TPM integration, or network-bound disk encryption.
+- Measured boot and TPM policies can change after firmware, bootloader, or kernel updates.
+
+Do not disable a security control merely to make a system boot without first understanding the failure and the resulting exposure.
+
+## Troubleshooting workflow
+
+### Recovery workflow
 
 1. Photograph or capture the console error.
 2. Try a known-good previous kernel from the bootloader.
@@ -313,17 +329,9 @@ cat /proc/modules
 9. Regenerate the bootloader configuration when required.
 10. Reboot with console access and validate services, storage, networking, and monitoring.
 
-## Security controls affecting boot
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
 
-- UEFI Secure Boot can reject unsigned kernels or modules.
-- Kernel lockdown can restrict low-level access when Secure Boot is active.
-- SELinux and AppArmor can block userspace actions after the kernel boots.
-- LUKS encryption may require console input, TPM integration, or network-bound disk encryption.
-- Measured boot and TPM policies can change after firmware, bootloader, or kernel updates.
-
-Do not disable a security control merely to make a system boot without first understanding the failure and the resulting exposure.
-
-## References
+## Official references
 
 - [Linux kernel documentation](https://docs.kernel.org/)
 - [systemd documentation](https://systemd.io/)

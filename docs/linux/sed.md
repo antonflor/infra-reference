@@ -5,7 +5,13 @@
 
 `sed` is a stream editor for selecting, replacing, deleting, inserting, and transforming text in files or pipelines.
 
-## Basic model
+## Safety
+
+Preview output before in-place edits and preserve an original copy. GNU and BSD in-place flags differ; check the local implementation before modifying files.
+
+## Quick reference
+
+### Basic model
 
 ```text
 sed [options] '<command>' <file>
@@ -13,7 +19,7 @@ sed [options] '<command>' <file>
 
 By default, sed prints each processed line after applying the script. Use `-n` when output should occur only through explicit `p` commands.
 
-## Common operations
+### Common operations
 
 Print selected lines:
 
@@ -57,14 +63,14 @@ Use another delimiter when paths contain many slashes:
 sed 's|/old/path|/new/path|g' <file>
 ```
 
-## Multiple commands and script files
+### Multiple commands and script files
 
 ```bash
 sed -e '<command-1>' -e '<command-2>' <file>
 sed -f <script.sed> <file>
 ```
 
-## In-place editing
+### In-place editing
 
 > [!DANGER]
 > In-place syntax differs between GNU and BSD/macOS sed, and a bad expression can damage every matching file. Preview output first and create a backup.
@@ -83,7 +89,7 @@ sed -i '.bak' 's/<old>/<new>/g' <file>
 
 Verify the result before removing backup files.
 
-## Useful addressing
+### Useful addressing
 
 ```bash
 sed -n '<start>,<end>p' <file>
@@ -91,7 +97,15 @@ sed '/<start-pattern>/,/<end-pattern>/p' <file>
 sed '<first>~<step>p' <file>  # GNU extension
 ```
 
-## Troubleshooting and portability
+## Troubleshooting workflow
+
+1. Confirm the input sample, expected edit, and installed sed implementation.
+2. Preview output without in-place editing and inspect shell quoting and line endings.
+3. Compare the pattern, address range, and substitution flags with the intended transformation.
+4. Correct the script and test representative records before editing files.
+5. Verify the result and preserve the original file for rollback.
+
+### Troubleshooting and portability
 
 - Quote sed programs to prevent shell expansion.
 - Confirm whether GNU or BSD sed is installed before using `-i`.
@@ -99,3 +113,10 @@ sed '<first>~<step>p' <file>  # GNU extension
 - Use a different delimiter for paths and URLs.
 - Test with `printf` or a copy of the file before modifying production configuration.
 - Prefer a dedicated parser when editing structured formats such as JSON, YAML, XML, or TOML.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
+
+- [POSIX sed specification](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/utilities/sed.html)
+- [GNU sed manual](https://www.gnu.org/software/sed/manual/)

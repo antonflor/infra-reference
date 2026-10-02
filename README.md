@@ -106,7 +106,7 @@ The diagrams are intentionally limited to concepts where visual relationships im
 | Regular expressions | [docs/linux/regex.md](docs/linux/regex.md) |
 | SCP | [docs/linux/scp.md](docs/linux/scp.md) |
 | sed | [docs/linux/sed.md](docs/linux/sed.md) |
-| Xen | [docs/linux/xen.md](docs/linux/xen.md) |
+| XenServer (`xe`) | [docs/linux/xen.md](docs/linux/xen.md) |
 
 ## High availability
 
@@ -143,7 +143,7 @@ Filenames use the canonical name engineers are likely to search for. Common, una
 
 Technically revalidated documents include an **Applies to** line and a **Last reviewed** date. Inherited version-sensitive pages that have not yet been revalidated are labeled **Legacy reference — technical validation pending** rather than receiving a misleading review date.
 
-Repository quality checks validate project documentation and every Markdown file under `docs/` on pull requests and changes to `main`. See [CONTRIBUTING.md](CONTRIBUTING.md) and [STYLE_GUIDE.md](STYLE_GUIDE.md) before adding or substantially rewriting a sheet.
+Repository quality checks validate the guide template, review-status metadata, Markdown structure, and local links for project documentation and every Markdown file under `docs/` on pull requests and changes to `main`. Run `python3 scripts/check_docs.py` from the repository root for the same offline check. See [CONTRIBUTING.md](CONTRIBUTING.md) and [STYLE_GUIDE.md](STYLE_GUIDE.md) before adding or substantially rewriting a sheet.
 
 ## License
 

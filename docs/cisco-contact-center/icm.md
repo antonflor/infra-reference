@@ -4,7 +4,13 @@
 
 Cisco Intelligent Contact Management (ICM) is the routing and orchestration layer used in Cisco Unified Contact Center Enterprise environments. It coordinates routing decisions across contact-center components, agents, queues, IVR systems, and external data sources.
 
-## Typical components
+## Safety
+
+Inspect component, duplex, and routing-script state before changing a production deployment. Preserve the previous script and configuration; changes can affect call routing and agent services.
+
+## Quick reference
+
+### Typical components
 
 - Router for real-time routing decisions;
 - Logger for configuration and historical data;
@@ -16,7 +22,7 @@ Cisco Intelligent Contact Management (ICM) is the routing and orchestration laye
 
 Exact roles, service names, database behavior, and redundancy requirements are release-specific.
 
-## Operational checks
+### Operational checks
 
 Before changing a production ICM environment, identify:
 
@@ -28,17 +34,7 @@ Before changing a production ICM environment, identify:
 - call-volume and capacity impact;
 - current backups and rollback process.
 
-## Troubleshooting sequence
-
-1. Capture the affected call or agent identifiers and timestamps.
-2. Confirm whether the issue affects routing, agent state, reporting, CTI, or one peripheral.
-3. Check component and duplex health using the release-specific diagnostic tools.
-4. Trace the routing script and identify the first unexpected branch or missing object.
-5. Verify Peripheral Gateway and CTI connectivity.
-6. Correlate Router, Logger, PG, and application logs by timestamp.
-7. Validate any correction with a controlled test call before broad deployment.
-
-## Common symptom areas
+### Common symptom areas
 
 | Symptom | Checks |
 |---|---|
@@ -49,10 +45,28 @@ Before changing a production ICM environment, identify:
 | Reporting does not match routing | Logger health, replication, reporting interval, data-source status |
 | Router utilization is high | Script complexity, external lookups, call volume, component health |
 
-## Related references
+### Related references
 
 - [CUIC](cuic.md)
 - [CVP](cvp.md)
 
 > [!NOTE]
 > This page intentionally avoids version-specific commands and architectural limits until they are revalidated against the documentation set for the deployed Cisco release.
+
+## Troubleshooting workflow
+
+### Troubleshooting sequence
+
+1. Capture the affected call or agent identifiers and timestamps.
+2. Confirm whether the issue affects routing, agent state, reporting, CTI, or one peripheral.
+3. Check component and duplex health using the release-specific diagnostic tools.
+4. Trace the routing script and identify the first unexpected branch or missing object.
+5. Verify Peripheral Gateway and CTI connectivity.
+6. Correlate Router, Logger, PG, and application logs by timestamp.
+7. Validate any correction with a controlled test call before broad deployment.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
+
+- [Cisco Unified Contact Center Enterprise documentation](https://www.cisco.com/c/en/us/support/customer-collaboration/unified-contact-center-enterprise/series.html)

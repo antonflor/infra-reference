@@ -4,7 +4,13 @@
 
 Cisco Unified Customer Voice Portal (CVP) provides voice self-service and call-treatment functions within Cisco contact-center environments. Deployments commonly integrate SIP call control, VoiceXML gateways, media services, speech resources, and Cisco routing components.
 
-## Typical components
+## Safety
+
+Inspect the call path and component health before changing routing, gateways, or media services. Preserve configuration and test on a controlled call path because changes can interrupt active calls.
+
+## Quick reference
+
+### Typical components
 
 - Call Server for call-control and application coordination;
 - VoiceXML gateways for media and VoiceXML execution;
@@ -16,7 +22,7 @@ Cisco Unified Customer Voice Portal (CVP) provides voice self-service and call-t
 
 Exact component names, supported deployment models, and scaling limits are release-specific.
 
-## Operational checks
+### Operational checks
 
 Before making a change, identify:
 
@@ -28,17 +34,7 @@ Before making a change, identify:
 - current call volume, license or capacity limits, and maintenance window;
 - rollback and configuration-backup procedure.
 
-## Troubleshooting sequence
-
-1. Reproduce one call and record timestamps, calling number, called number, and correlation identifiers.
-2. Determine the last component that processed the call successfully.
-3. Trace SIP signaling across ingress gateway, CVP, Unified CM, and routing components.
-4. Verify media, VoiceXML, and speech-resource reachability separately from call signaling.
-5. Compare routing-script decisions with CVP and gateway logs.
-6. Check DNS, certificates, time synchronization, codec, DTMF, and network quality.
-7. Test the least disruptive correction on a controlled call path.
-
-## Common symptom areas
+### Common symptom areas
 
 | Symptom | Checks |
 |---|---|
@@ -49,10 +45,28 @@ Before making a change, identify:
 | One-way or poor audio | RTP path, NAT, firewall, codec, packet loss, jitter |
 | Intermittent call drops | SIP timers, gateway resources, network loss, component health |
 
-## Related references
+### Related references
 
 - [CUIC](cuic.md)
 - [ICM](icm.md)
 
 > [!NOTE]
 > This page intentionally avoids version-specific configuration commands until they are revalidated against the Cisco documentation set matching the deployed release.
+
+## Troubleshooting workflow
+
+### Troubleshooting sequence
+
+1. Reproduce one call and record timestamps, calling number, called number, and correlation identifiers.
+2. Determine the last component that processed the call successfully.
+3. Trace SIP signaling across ingress gateway, CVP, Unified CM, and routing components.
+4. Verify media, VoiceXML, and speech-resource reachability separately from call signaling.
+5. Compare routing-script decisions with CVP and gateway logs.
+6. Check DNS, certificates, time synchronization, codec, DTMF, and network quality.
+7. Test the least disruptive correction on a controlled call path.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
+
+- [Cisco Unified Customer Voice Portal documentation](https://www.cisco.com/c/en/us/support/customer-collaboration/unified-customer-voice-portal/series.html)

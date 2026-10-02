@@ -5,7 +5,13 @@
 
 User Datagram Protocol (UDP) provides connectionless datagram delivery with low protocol overhead. UDP does not establish a session or guarantee delivery, ordering, duplicate suppression, congestion control, or retransmission.
 
-## Datagram model
+## Safety
+
+Inspect listeners, counters, and both traffic directions before changing timeouts or firewall policy. Scope packet captures and probe rates to avoid exposing payloads or adding load to an affected service.
+
+## Quick reference
+
+### Datagram model
 
 Each UDP datagram is an independent message containing:
 
@@ -18,7 +24,7 @@ Each UDP datagram is an independent message containing:
 
 Applications using UDP must tolerate loss, duplication, reordering, or implement recovery behavior themselves.
 
-## Common uses
+### Common uses
 
 - DNS queries and responses;
 - DHCP;
@@ -28,7 +34,7 @@ Applications using UDP must tolerate loss, duplication, reordering, or implement
 - VPN and tunneling protocols;
 - QUIC, which implements reliable transport behavior above UDP.
 
-## Read-only inspection
+### Read-only inspection
 
 Linux examples:
 
@@ -46,7 +52,7 @@ tcpdump -ni <interface> 'udp and host <ip-address>'
 tcpdump -ni <interface> 'udp port <port>'
 ```
 
-## Operational considerations
+### Operational considerations
 
 - A missing response does not reveal whether the request, response, or application failed.
 - Stateful firewalls and NAT devices maintain time-limited UDP flow entries even though UDP itself is stateless.
@@ -54,7 +60,7 @@ tcpdump -ni <interface> 'udp port <port>'
 - High-rate UDP applications must implement appropriate pacing and congestion behavior.
 - ICMP errors can provide useful evidence but may be filtered or rate-limited.
 
-## Common symptoms
+### Common symptoms
 
 | Symptom | Likely checks |
 |---|---|
@@ -66,6 +72,8 @@ tcpdump -ni <interface> 'udp port <port>'
 
 ## Troubleshooting workflow
 
+### Troubleshooting workflow
+
 1. Confirm the destination address and UDP port.
 2. Verify the service is listening and bound to the intended interface.
 3. Capture traffic at the sender and receiver.
@@ -74,6 +82,8 @@ tcpdump -ni <interface> 'udp port <port>'
 6. Test payload sizes to identify MTU or fragmentation behavior.
 7. Validate application-level retry, sequencing, and timeout logic.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [RFC 768: User Datagram Protocol](https://www.rfc-editor.org/rfc/rfc768)

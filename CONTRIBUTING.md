@@ -25,6 +25,7 @@ Current domains are:
 - `cisco-contact-center`
 - `cloud`
 - `containers`
+- `kubernetes-platforms`
 - `automation`
 - `linux`
 - `high-availability`
@@ -52,7 +53,7 @@ When adding, moving, or renaming a sheet:
 
 ## Cheat-sheet structure
 
-Use the following order when it fits the topic:
+Use the following structure for every reference under `docs/`, including conceptual and visual guides. Group existing topic sections beneath `Quick reference` with `###` headings; use an actual diagnostic or review sequence in `Troubleshooting workflow`. Keep warnings and authoritative sources specific to the topic:
 
 ```markdown
 # Product or Topic Cheat Sheet
@@ -86,6 +87,14 @@ When inherited content has only received a structural cleanup and has not been t
 ```
 
 Do not assign a fresh review date to unvalidated content.
+
+Run the same structural check used in CI from the repository root:
+
+```bash
+python3 scripts/check_docs.py
+```
+
+The check validates section order and content, review-status metadata, a scope statement, heading levels outside code examples, language-tagged fences, Mermaid declarations, filenames, and local links and heading fragments. It does not technically validate commands or external sources.
 
 ## Style rules
 

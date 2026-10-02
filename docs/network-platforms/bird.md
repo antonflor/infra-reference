@@ -1,108 +1,79 @@
 # BIRD Command Cheat Sheet
 
-This document provides a comprehensive list of commands for managing and troubleshooting BIRD (BIRD Internet Routing Daemon), an open-source routing daemon for Unix-like systems. BIRD is widely used for its flexibility and supports various routing protocols, making it a preferred choice in many network infrastructures.
+> **Status:** Legacy reference — technical validation pending
 
-The commands listed here are tailored for network engineers and system administrators who work with BIRD on Debian-based systems. They cover a range of functionalities from basic status checks to advanced protocol management and routing table manipulation. This cheat sheet serves as a quick reference guide to streamline daily tasks and enhance troubleshooting procedures.
+A reference for BIRD Internet Routing Daemon inspection, protocols, routes, and configuration using `birdc`. Confirm syntax against the installed BIRD major release.
 
-Please note that the effectiveness and output of these commands can vary based on your BIRD configuration and the specific environment in which it's running. Always ensure you have the necessary permissions to execute these commands and use them cautiously, especially in a production environment.
+## Safety
 
+Inspect protocols and routes before reloading configuration or disabling a protocol. Routing changes can withdraw reachability; validate the candidate configuration and preserve the previous configuration before applying a change.
 
-## BIRD Status and Protocol Management
+## Quick reference
 
-- **birdc show status**
-  - Displays the current status of the BIRD routing daemon.
+### BIRD Status and Protocol Management
 
-- **birdc show protocols**
-  - Lists all routing protocols configured in BIRD.
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `birdc show status` | Displays the current status of the BIRD routing daemon. |
+| — | `birdc show protocols` | Lists all routing protocols configured in BIRD. |
+| — | `birdc show protocol <protocol-name>` | Shows detailed information about a specific routing protocol. |
+| `birdc show protocols` | `birdc configure` | Reloads the configuration file. **Caution:** Reloads configuration; inspect `birdc show status` and run `birdc configure check` first. |
+| — | `birdc configure check` | Checks the configuration file for errors without applying changes. |
+| `birdc show protocols` | `birdc disable <protocol-name>` | Temporarily disables a routing protocol. **Caution:** Disruptive: withdraws routes from this protocol. |
+| `birdc show protocols` | `birdc enable <protocol-name>` | Enables a previously disabled routing protocol. **Caution:** Activates a protocol and can change routing. |
+| `birdc show protocols` | `birdc restart <protocol-name>` | Restarts a specific routing protocol. **Caution:** Disruptive: restarts a routing protocol. |
+| — | `birdc log <message>` | Sends a custom log message to the BIRD log. |
+| — | `birdc show events` | Displays recent routing events. |
+| — | `birdc show symbols` | Lists all symbols (like route filters and functions) defined in the configuration. |
+| `birdc show protocols` | `birdc debug <protocol-name> <debug-options>` | Enables debugging for a specific protocol. **Caution:** Changes diagnostic state and can increase log volume. |
 
-- **birdc show protocol [PROTOCOL_NAME]**
-  - Shows detailed information about a specific routing protocol.
+### Route Display and Analysis
 
-- **birdc configure**
-  - Reloads the configuration file.
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `birdc show route` | Displays the routing table managed by BIRD. |
+| — | `birdc show route protocol <protocol-name>` | Shows routes learned from a specific routing protocol. |
+| — | `birdc show route all` | Displays all routes in the routing table, including inactive ones. |
+| — | `birdc show route export <protocol-name>` | Shows routes exported by a specific protocol. |
+| — | `birdc show route where <condition>` | Displays routes matching a specific condition. |
+| — | `birdc show route for <ip-address>` | Shows the route for a specific IP address. |
 
-- **birdc configure check**
-  - Checks the configuration file for errors without applying changes.
+### OSPF and BFD Sessions
 
-- **birdc disable [PROTOCOL_NAME]**
-  - Temporarily disables a routing protocol.
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `birdc show ospf neighbors` | Lists OSPF neighbors. |
+| — | `birdc show ospf state` | Displays the OSPF internal state. |
+| — | `birdc show ospf interfaces` | Shows OSPF interfaces and their states. |
+| — | `birdc show ospf lsadb` | Displays the OSPF link-state database. |
+| — | `birdc show bfd sessions` | Lists BFD (Bidirectional Forwarding Detection) sessions. |
 
-- **birdc enable [PROTOCOL_NAME]**
-  - Enables a previously disabled routing protocol.
+### Memory Usage and Interface Information
 
-- **birdc restart [PROTOCOL_NAME]**
-  - Restarts a specific routing protocol.
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `birdc show memory` | Shows memory usage by the BIRD daemon. |
+| — | `birdc show interfaces` | Lists network interfaces known to BIRD. |
+| — | `birdc show sockets` | Shows active network sockets used by BIRD. |
 
-- **birdc log [MESSAGE]**
-  - Sends a custom log message to the BIRD log.
+### Routing Tables and Filters
 
-- **birdc show events**
-  - Displays recent routing events.
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `birdc show tables` | Lists routing tables managed by BIRD. |
+| — | `birdc show static routes` | Displays static routes configured in BIRD. |
+| — | `birdc show filters` | Displays the configured route filters. |
+| — | `birdc show rip neighbors` | Lists RIP neighbors and their status. |
 
-- **birdc show symbols**
-  - Lists all symbols (like route filters and functions) defined in the configuration.
+## Troubleshooting workflow
 
-- **birdc debug [PROTOCOL_NAME] [DEBUG_OPTIONS]**
-  - Enables debugging for a specific protocol.
+1. Confirm the affected prefix, peer, protocol, and BIRD release.
+2. Inspect `birdc show status`, protocols, and routes without restarting sessions.
+3. Collect daemon logs and neighbor-state changes with timestamps.
+4. Compare protocol configuration, filters, and exported routes with the intended routing policy.
+5. Validate the candidate configuration before a reviewed reload or targeted correction.
+6. Verify peer state and route reachability; record the configuration and rollback file.
 
-## Route Display and Analysis
+## Official references
 
-- **birdc show route**
-  - Displays the routing table managed by BIRD.
-
-- **birdc show route protocol [PROTOCOL_NAME]**
-  - Shows routes learned from a specific routing protocol.
-
-- **birdc show route all**
-  - Displays all routes in the routing table, including inactive ones.
-
-- **birdc show route export [PROTOCOL_NAME]**
-  - Shows routes exported by a specific protocol.
-
-- **birdc show route where [CONDITION]**
-  - Displays routes matching a specific condition.
-
-- **birdc show route for [IP_ADDRESS]**
-  - Shows the route for a specific IP address.
-
-## OSPF and BFD Sessions
-
-- **birdc show ospf neighbors**
-  - Lists OSPF neighbors.
-
-- **birdc show ospf state**
-  - Displays the OSPF internal state.
-
-- **birdc show ospf interfaces**
-  - Shows OSPF interfaces and their states.
-
-- **birdc show ospf lsadb**
-  - Displays the OSPF link-state database.
-
-- **birdc show bfd sessions**
-  - Lists BFD (Bidirectional Forwarding Detection) sessions.
-
-## Memory Usage and Interface Information
-
-- **birdc show memory**
-  - Shows memory usage by the BIRD daemon.
-
-- **birdc show interfaces**
-  - Lists network interfaces known to BIRD.
-
-- **birdc show sockets**
-  - Shows active network sockets used by BIRD.
-
-## Routing Tables and Filters
-
-- **birdc show tables**
-  - Lists routing tables managed by BIRD.
-
-- **birdc show static routes**
-  - Displays static routes configured in BIRD.
-
-- **birdc show filters**
-  - Displays the configured route filters.
-
-- **birdc show rip neighbors**
-  - Lists RIP neighbors and their status.
+- [BIRD documentation](https://bird.network.cz/?get_doc)

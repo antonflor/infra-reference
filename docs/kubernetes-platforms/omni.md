@@ -5,10 +5,14 @@
 
 A practical operational reference for registering Talos Linux machines, creating and managing Kubernetes clusters, handling access, upgrades, backups, infrastructure providers, and recovery through Omni.
 
+## Safety
+
 > [!WARNING]
 > Once a machine joins Omni, Omni becomes the management authority for that Talos installation. The local Talos API is disabled for normal direct administration, and future configuration changes must be made through Omni. Leaving that model generally requires reprovisioning the machine with standard Talos installation media.
 
-## Product relationship
+## Quick reference
+
+### Product relationship
 
 | Name | Meaning |
 |---|---|
@@ -20,7 +24,7 @@ A practical operational reference for registering Talos Linux machines, creating
 
 Omni is not a Kubernetes distribution. It manages Talos Linux machines and the Kubernetes clusters running on them.
 
-## Core capabilities
+### Core capabilities
 
 - register Talos machines across bare metal, virtual machines, cloud, edge, and mixed environments;
 - create, scale, upgrade, and delete Kubernetes clusters;
@@ -32,7 +36,7 @@ Omni is not a Kubernetes distribution. It manages Talos Linux machines and the K
 - expose UI and API-driven workflows through `omnictl`;
 - support workload access and service-proxy features where enabled.
 
-## Hosted and self-hosted Omni
+### Hosted and self-hosted Omni
 
 Omni is available as:
 
@@ -51,7 +55,7 @@ Self-hosting options can include:
 
 Hosted Omni is generally the lowest-operational-overhead option. Self-hosted Omni introduces responsibility for backups, upgrades, certificates, identity, storage, registry services, and disaster recovery.
 
-## Install `omnictl`
+### Install `omnictl`
 
 macOS or Linux with Homebrew:
 
@@ -66,7 +70,7 @@ omnictl version
 omnictl --help
 ```
 
-## Client configuration
+### Client configuration
 
 Omni client configuration is called `omniconfig`.
 
@@ -102,7 +106,7 @@ export OMNICONFIG=<path-to-omniconfig>
 > [!CAUTION]
 > Verify the active Omni context and identity before applying templates, deleting clusters, rotating join tokens, or downloading administrative credentials.
 
-## Inspect available resources
+### Inspect available resources
 
 Omni uses a resource-oriented API similar in feel to `kubectl` and `talosctl`.
 
@@ -129,7 +133,7 @@ omnictl get <resource-type> --watch
 
 Resource names can evolve. Use `omnictl get rd` rather than assuming an old resource spelling remains valid.
 
-## Download installation media
+### Download installation media
 
 Download Omni-configured media:
 
@@ -148,7 +152,7 @@ Typical lifecycle:
 5. Assign it to a cluster or machine class.
 6. Let Omni apply Talos configuration and bootstrap Kubernetes.
 
-## Join an existing Talos machine
+### Join an existing Talos machine
 
 Create a join token:
 
@@ -183,7 +187,7 @@ Join methods include:
 > [!DANGER]
 > Joining a machine changes its management model. Confirm that existing automation, direct Talos access, recovery procedures, and break-glass expectations are compatible with Omni before enrolling production nodes.
 
-## SideroLink connectivity
+### SideroLink connectivity
 
 SideroLink provides encrypted communication between Omni and managed machines.
 
@@ -200,7 +204,7 @@ Check when registration or management fails:
 
 HTTP tunneling may be available for networks that block UDP, but it adds overhead and should not be enabled without a network requirement.
 
-## Download kubeconfig and talosconfig
+### Download kubeconfig and talosconfig
 
 Download and merge a cluster kubeconfig:
 
@@ -235,7 +239,7 @@ omnictl talosconfig ./talosconfig --force
 > [!WARNING]
 > Administrative kubeconfig and talosconfig files are sensitive credentials. Prefer identity-backed access, short-lived sessions, narrowly scoped service accounts, secure storage, and auditable workflows.
 
-## Cluster templates
+### Cluster templates
 
 Omni cluster templates are YAML documents that declare cluster resources and can be stored in Git.
 
@@ -293,7 +297,7 @@ omnictl apply \
 
 Store patches, manifests, version choices, and machine-class intent with the template so the cluster can be reproduced and reviewed.
 
-## Machine classes
+### Machine classes
 
 Machine classes select machines by labels and desired count.
 
@@ -307,7 +311,7 @@ Use them for:
 
 Validate label selectors carefully. An overly broad class can allocate the wrong hardware or location to a production cluster.
 
-## Infrastructure providers
+### Infrastructure providers
 
 Current documented provider types include:
 
@@ -319,7 +323,7 @@ Current documented provider types include:
 
 An Omni instance can connect to multiple provider deployments. A provider commonly represents one location, management API, credential boundary, region, or network segment.
 
-### Static providers
+#### Static providers
 
 Static providers manage existing machines and can handle operations such as:
 
@@ -328,7 +332,7 @@ Static providers manage existing machines and can handle operations such as:
 - Talos provisioning;
 - returning machines to an available pool.
 
-### Dynamic providers
+#### Dynamic providers
 
 Dynamic providers create and destroy machines through another infrastructure API.
 
@@ -347,7 +351,7 @@ List configured providers:
 omnictl infraprovider list
 ```
 
-## Talos configuration overrides
+### Talos configuration overrides
 
 Omni is the source of truth for critical Talos configuration, identity, certificates, endpoints, and connectivity. Some fields that work in standalone Talos are forbidden or ignored under Omni.
 
@@ -356,7 +360,7 @@ Use Omni-supported patches and template fields rather than directly editing Omni
 > [!CAUTION]
 > A direct Talos configuration that is valid for standalone Talos may be rejected, ignored, or later reconciled by Omni.
 
-## Cluster upgrades
+### Cluster upgrades
 
 Omni manages both Talos Linux and Kubernetes upgrades.
 
@@ -381,7 +385,7 @@ Operational sequence:
 
 Omni upgrades control-plane nodes in a controlled sequence and checks etcd health. Do not bypass this process by deleting machines or Kubernetes nodes directly.
 
-## Stalled upgrade troubleshooting
+### Stalled upgrade troubleshooting
 
 Inspect machine logs:
 
@@ -406,7 +410,7 @@ During a stalled control-plane upgrade:
 - do not continue upgrading other control-plane nodes;
 - preserve logs and backup state before recovery.
 
-## etcd backups
+### etcd backups
 
 Inspect backup status:
 
@@ -424,7 +428,7 @@ Confirm:
 
 Backups are the primary recovery path for an unrecoverable control-plane failure.
 
-## Cluster deletion
+### Cluster deletion
 
 Preview deletion:
 
@@ -448,7 +452,7 @@ omnictl cluster delete <cluster-name> \
 > [!DANGER]
 > Cluster deletion can destroy managed virtual machines, release bare-metal machines, remove cluster credentials, and permanently eliminate workloads and data not stored externally.
 
-## Users, service accounts, and access
+### Users, service accounts, and access
 
 Inspect users:
 
@@ -469,7 +473,7 @@ Access design should distinguish:
 
 Integrate enterprise identity providers and map access to least-privilege roles. Review inactive users and service accounts regularly.
 
-## Audit and support
+### Audit and support
 
 Review audit events:
 
@@ -487,7 +491,7 @@ omnictl support \
 
 Support bundles and audit logs can contain sensitive infrastructure, identity, and workload metadata. Protect them accordingly.
 
-## Common failure patterns
+### Common failure patterns
 
 | Symptom | Checks |
 |---|---|
@@ -503,6 +507,8 @@ Support bundles and audit logs can contain sensitive infrastructure, identity, a
 
 ## Troubleshooting workflow
 
+### Troubleshooting workflow
+
 1. Verify the active omniconfig context and identity.
 2. Check Omni service health and account status.
 3. Inspect cluster, machine, and provider resources.
@@ -514,7 +520,9 @@ Support bundles and audit logs can contain sensitive infrastructure, identity, a
 9. Avoid out-of-band deletion of machines or control-plane nodes.
 10. Apply the documented Omni recovery path and verify the full cluster afterward.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [Omni overview](https://docs.siderolabs.com/omni/overview/what-is-omni)
 - [Omni CLI reference](https://docs.siderolabs.com/omni/reference/cli)

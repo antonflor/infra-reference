@@ -9,10 +9,14 @@ The specification defines **what** must be built. The plan defines **how** it wi
 
 Related visual: [Spec-driven development lifecycle](../visual-guides.md#spec-driven-development-lifecycle)
 
+## Safety
+
 > [!CAUTION]
 > A detailed specification does not guarantee a correct implementation. Review generated requirements, code, tests, security assumptions, migrations, and deployment procedures before merging or releasing changes.
 
-## Quick definition
+## Quick reference
+
+### Quick definition
 
 ```text
 Prompt = initial request
@@ -28,7 +32,7 @@ SDD is commonly Git-based, but Git is not the methodology itself. Git records an
 
 The usual term is **spec-driven development**. Deployment may be part of the plan, but it is only one stage of the larger development workflow.
 
-## When to use it
+### When to use it
 
 Use a complete SDD workflow for changes with meaningful complexity, risk, ambiguity, or handoff requirements:
 
@@ -44,7 +48,7 @@ Use a lighter issue, checklist, or pull-request description for low-risk work su
 
 Scale the specification to the risk and complexity of the change. Do not create large documentation packages for trivial work.
 
-## Core artifacts
+### Core artifacts
 
 | Artifact | Primary question | Typical contents |
 |---|---|---|
@@ -61,7 +65,7 @@ Not every change requires every artifact. The minimum useful chain is:
 Requirement -> implementation task -> code change -> validation evidence
 ```
 
-## Recommended workflow
+### Recommended workflow
 
 1. **Define the problem.** Describe who is affected, what currently happens, what should happen instead, and why the change matters.
 2. **Write the specification.** Record goals, non-goals, requirements, constraints, edge cases, and measurable acceptance criteria.
@@ -73,7 +77,7 @@ Requirement -> implementation task -> code change -> validation evidence
 8. **Review the complete change.** Compare the pull request with the specification rather than reviewing code in isolation.
 9. **Update the artifacts when requirements change.** Change the specification or plan before silently changing implementation behavior.
 
-## Clarification checklist
+### Clarification checklist
 
 Before creating the technical plan, confirm:
 
@@ -90,7 +94,7 @@ Before creating the technical plan, confirm:
 
 A useful test is: **Could two developers read the specification and reach approximately the same understanding of the expected result?**
 
-## Git-based workflow
+### Git-based workflow
 
 A common repository workflow is:
 
@@ -120,7 +124,7 @@ Recommended branch and commit practices:
 
 See [git.md](git.md) for branch, commit, pull-request, history-repair, and recovery commands.
 
-## Minimal repository layout
+### Minimal repository layout
 
 ```text
 project/
@@ -142,7 +146,7 @@ project/
 
 Tool-specific layouts vary. The filenames matter less than keeping requirements, decisions, tasks, code, and validation traceable.
 
-## Minimal specification template
+### Minimal specification template
 
 ```markdown
 # <Feature name>
@@ -182,7 +186,7 @@ Who is affected, what happens today, and why is a change needed?
 
 Write requirements so that each one describes observable behavior. Replace vague terms such as “fast,” “secure,” and “user-friendly” with measurable or reviewable criteria.
 
-## Minimal technical plan template
+### Minimal technical plan template
 
 ```markdown
 # <Feature name> implementation plan
@@ -212,7 +216,7 @@ Write requirements so that each one describes observable behavior. Replace vague
 
 The specification should remain focused on what and why. Put framework, library, schema, component, and deployment decisions in the plan.
 
-## Task-list template
+### Task-list template
 
 ```markdown
 # <Feature name> tasks
@@ -229,7 +233,7 @@ The specification should remain focused on what and why. Put framework, library,
 
 Each task should have one clear result, identify likely affected components, and include a validation step. Avoid tasks such as “build the backend” that hide many unrelated changes.
 
-## Acceptance-test pattern
+### Acceptance-test pattern
 
 ```gherkin
 Given <starting state>
@@ -240,7 +244,7 @@ And <additional required behavior>
 
 Map tests back to requirement or acceptance-criterion identifiers when the feature is large, regulated, security-sensitive, or likely to be maintained by multiple teams.
 
-## Small worked example
+### Small worked example
 
 Initial request:
 
@@ -283,7 +287,7 @@ Example tasks:
 
 The improved version defines success, failure behavior, response safety, performance, exclusions, and validation evidence before implementation begins.
 
-## Pull-request review checklist
+### Pull-request review checklist
 
 - [ ] Every implemented behavior maps to an approved requirement.
 - [ ] Every acceptance criterion has test or review evidence.
@@ -296,7 +300,7 @@ The improved version defines success, failure behavior, response safety, perform
 - [ ] Documentation reflects the final implementation.
 - [ ] The specification and plan were updated when approved decisions changed.
 
-## Common mistakes
+### Common mistakes
 
 - treating a large natural-language prompt as a complete specification;
 - choosing implementation details before defining the problem;
@@ -309,7 +313,7 @@ The improved version defines success, failure behavior, response safety, perform
 - letting the specification become stale after the code changes;
 - applying a heavyweight process to trivial low-risk work.
 
-## Tool-assisted SDD
+### Tool-assisted SDD
 
 Tools can generate and maintain artifacts, but the underlying workflow is tool-neutral.
 
@@ -318,6 +322,15 @@ Tools can generate and maintain artifacts, but the underlying workflow is tool-n
 - A manual Markdown workflow can use the same principles without adopting a specific CLI, editor, model, or hosted service.
 
 Treat generated specifications and plans as drafts requiring engineering review. Tool output does not replace product, security, architecture, or operational judgment.
+
+## Troubleshooting workflow
+
+1. Identify the failed acceptance criterion, affected scenario, and implementation revision.
+2. Inspect the specification, plan, task status, and test results before changing code.
+3. Collect reproducible inputs, failure output, and relevant logs.
+4. Compare the observed behavior with agreed requirements and constraints; resolve ambiguity explicitly.
+5. Update the smallest affected artifact or implementation and rerun the relevant acceptance check.
+6. Verify the complete affected scenario and record the specification revision and rollback state.
 
 ## Official references
 

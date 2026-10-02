@@ -5,10 +5,14 @@
 
 A practical reference for Google Cloud resource hierarchy, common services, authentication, Compute Engine, Google Kubernetes Engine, Cloud Storage, IAM, and VPC networking.
 
+## Safety
+
 > [!WARNING]
 > Verify the active account, project, region, and zone before changing resources. Google Cloud commands often succeed against whichever project is currently selected, even when it is not the project you intended.
 
-## Resource hierarchy and scope
+## Quick reference
+
+### Resource hierarchy and scope
 
 | Scope | Purpose |
 |---|---|
@@ -20,7 +24,7 @@ A practical reference for Google Cloud resource hierarchy, common services, auth
 
 Projects have both a human-readable project ID and an internal project number. Many APIs and IAM relationships use one or the other, so verify which value a command expects.
 
-## Common services
+### Common services
 
 | Area | Services |
 |---|---|
@@ -34,7 +38,7 @@ Projects have both a human-readable project ID and an internal project number. M
 | Operations | Cloud Logging, Cloud Monitoring, Error Reporting, Trace |
 | Build and delivery | Cloud Build, Cloud Deploy, Artifact Registry |
 
-## CLI setup and identity
+### CLI setup and identity
 
 ```bash
 gcloud version
@@ -72,7 +76,7 @@ gcloud config configurations describe <configuration-name>
 gcloud config configurations delete <configuration-name>
 ```
 
-## Application Default Credentials
+### Application Default Credentials
 
 Local user credentials for client libraries:
 
@@ -91,7 +95,7 @@ gcloud auth application-default print-access-token
 
 Prefer workload identity, Workload Identity Federation, or service-account impersonation for automation instead of downloading long-lived service-account keys.
 
-## Service-account impersonation
+### Service-account impersonation
 
 Print a short-lived access token:
 
@@ -109,7 +113,7 @@ gcloud config unset auth/impersonate_service_account
 
 Verify the effective identity by testing a read-only command against the intended project before making changes.
 
-## Enable and inspect APIs
+### Enable and inspect APIs
 
 ```bash
 gcloud services list --enabled
@@ -121,7 +125,7 @@ gcloud services disable <service-name>.googleapis.com
 > [!CAUTION]
 > Disabling an API can interrupt dependent workloads or management operations. Identify active resources and dependencies first.
 
-## Compute Engine
+### Compute Engine
 
 Inspect instances:
 
@@ -155,7 +159,7 @@ gcloud compute instances delete <instance> --zone=<zone>
 > [!DANGER]
 > Deleting an instance can also delete attached disks when their auto-delete setting is enabled. Inspect disk attachments and backup requirements first.
 
-## Google Kubernetes Engine
+### Google Kubernetes Engine
 
 ```bash
 gcloud container clusters list
@@ -195,7 +199,7 @@ gcloud container clusters delete <cluster> \
 > [!DANGER]
 > Cluster deletion removes the Kubernetes control plane and node pools. Confirm persistent-volume retention, load balancers, DNS, and external dependencies first.
 
-## Cloud Storage
+### Cloud Storage
 
 Use `gcloud storage` for new scripts:
 
@@ -220,7 +224,7 @@ gcloud storage buckets describe gs://<bucket> \
 
 `gsutil` remains available for compatibility, but new automation should generally use `gcloud storage` unless a required feature is unavailable.
 
-## IAM and service accounts
+### IAM and service accounts
 
 ```bash
 gcloud iam roles list
@@ -252,7 +256,7 @@ gcloud projects remove-iam-policy-binding <project-id> \
 
 Avoid broad primitive roles such as Owner, Editor, and Viewer for routine access. Prefer predefined or custom roles with the minimum permissions required.
 
-## VPC networking
+### VPC networking
 
 List and inspect networks:
 
@@ -295,7 +299,7 @@ gcloud compute firewall-rules create <rule> \
 
 Avoid `0.0.0.0/0` and `::/0` unless public exposure is explicitly required and protected by additional controls.
 
-## Cloud Run
+### Cloud Run
 
 ```bash
 gcloud run services list --region=<region>
@@ -310,7 +314,7 @@ gcloud run services update-traffic <service> \
 
 Inspect IAM before enabling unauthenticated access.
 
-## Cloud SQL
+### Cloud SQL
 
 ```bash
 gcloud sql instances list
@@ -326,7 +330,7 @@ Delete only after confirming final backups and dependent applications:
 gcloud sql instances delete <instance>
 ```
 
-## Logging and monitoring
+### Logging and monitoring
 
 ```bash
 gcloud logging logs list
@@ -344,7 +348,7 @@ gcloud logging read \
   --freshness=1h
 ```
 
-## Output formatting and filtering
+### Output formatting and filtering
 
 ```bash
 gcloud <group> <command> --help
@@ -361,7 +365,9 @@ gcloud projects list --format='value(projectId)'
 gcloud compute instances list --filter='status=RUNNING'
 ```
 
-## Troubleshooting checklist
+## Troubleshooting workflow
+
+### Troubleshooting checklist
 
 1. Verify active identity with `gcloud auth list`.
 2. Verify project, region, and zone with `gcloud config list`.
@@ -382,7 +388,9 @@ gcloud logging read 'protoPayload.status.code!=0' --limit=50
 
 Debug output can contain request details and identifiers. Sanitize it before sharing.
 
-## References
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [Google Cloud CLI reference](https://cloud.google.com/sdk/gcloud/reference)
 - [Authenticate for the Google Cloud CLI](https://cloud.google.com/sdk/docs/authorizing)

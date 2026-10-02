@@ -10,7 +10,9 @@ A quick reference for formatting, validating, planning, applying, inspecting, an
 > [!WARNING]
 > Review every plan before applying it. State commands can change Terraform’s record without changing real infrastructure. Back up remote state and confirm locking before manual state repair.
 
-## Daily workflow
+## Quick reference
+
+### Daily workflow
 
 ```bash
 terraform version
@@ -24,7 +26,7 @@ terraform apply tfplan
 
 Use a saved plan when the reviewed plan must be exactly the one applied. Never commit plan files because they can contain sensitive values.
 
-## Initialization and providers
+### Initialization and providers
 
 ```bash
 terraform init
@@ -38,7 +40,7 @@ terraform providers lock \
 
 Commit `.terraform.lock.hcl`. Do not commit `.terraform/`.
 
-## Planning
+### Planning
 
 ```bash
 terraform plan
@@ -52,18 +54,20 @@ terraform plan -target=<resource-address>
 > [!CAUTION]
 > `-target` is intended for exceptional recovery or focused troubleshooting. Re-run a full plan afterward to detect remaining drift.
 
-## Applying and destroying
+### Applying and destroying
 
 ```bash
 terraform apply
 terraform apply tfplan
 terraform apply -refresh-only
+terraform plan -destroy
+# WARNING: destroy deletes managed infrastructure; review the plan and backups first.
 terraform destroy
 ```
 
 Avoid `-auto-approve` in interactive production workflows unless a reviewed automation pipeline controls the inputs and plan.
 
-## Outputs and inspection
+### Outputs and inspection
 
 ```bash
 terraform output
@@ -74,7 +78,7 @@ terraform console
 terraform graph
 ```
 
-## Workspaces
+### Workspaces
 
 ```bash
 terraform workspace show
@@ -86,7 +90,7 @@ terraform workspace delete <name>
 
 CLI workspaces share a backend and configuration. They are not a complete isolation boundary for environments with different credentials, policies, or blast radii.
 
-## State inspection and repair
+### State inspection and repair
 
 ```bash
 terraform state list
@@ -104,7 +108,7 @@ Before a manual state change:
 4. document the intended mapping;
 5. run a full plan afterward.
 
-## Import existing infrastructure
+### Import existing infrastructure
 
 Terraform supports import blocks in configuration:
 
@@ -129,7 +133,7 @@ terraform import <resource-address> <provider-resource-id>
 
 Import adds an object to state; it does not automatically produce a complete, maintainable configuration.
 
-## Replace a resource
+### Replace a resource
 
 Prefer a reviewable plan using `-replace`:
 
@@ -140,7 +144,7 @@ terraform apply tfplan
 
 `terraform taint` is deprecated. Do not teach it as the normal replacement workflow.
 
-## Dependency and configuration troubleshooting
+### Dependency and configuration troubleshooting
 
 ```bash
 terraform fmt -check -recursive
@@ -158,7 +162,7 @@ unset TF_LOG
 unset TF_LOG_PATH
 ```
 
-## Locked state
+### Locked state
 
 Investigate the active lock owner before using:
 
@@ -168,6 +172,15 @@ terraform force-unlock <lock-id>
 
 > [!DANGER]
 > Forcing an active lock can allow concurrent state writes and corrupt state. Use it only after proving that the locking process is gone.
+
+## Troubleshooting workflow
+
+1. Confirm the working directory, workspace, backend, provider versions, and target environment.
+2. Inspect state and the last plan without editing state or unlocking it.
+3. Collect initialization, validation, and provider errors with timestamps.
+4. Compare configuration, variables, dependencies, and locking state with the intended environment.
+5. Review a new plan before applying the smallest correction; back up state before manual repair.
+6. Verify the full plan and service recovery, then record the change and state-backup location.
 
 ## Official references
 

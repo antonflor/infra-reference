@@ -5,10 +5,14 @@
 
 A practical operational reference for installing, configuring, inspecting, upgrading, backing up, and recovering Kubernetes nodes running Talos Linux.
 
+## Safety
+
 > [!WARNING]
 > Talos is managed through its API rather than SSH. Always verify the active `talosconfig` context, endpoints, target nodes, cluster identity, and control-plane quorum before applying configuration, upgrading, resetting, or recovering a node.
 
-## What Talos Linux is
+## Quick reference
+
+### What Talos Linux is
 
 Talos Linux is an immutable, API-managed operating system designed specifically for Kubernetes.
 
@@ -23,7 +27,7 @@ Key characteristics:
 
 Talos Linux is the node operating system. Kubernetes is the orchestrator running on top of it. [Omni](omni.md) is an optional management platform above Talos and Kubernetes.
 
-## Core objects
+### Core objects
 
 | Object | Purpose |
 |---|---|
@@ -37,7 +41,7 @@ Talos Linux is the node operating system. Kubernetes is the orchestrator running
 | Image Factory schematic | Content-addressed image customization definition |
 | System extension | Additional supported firmware, drivers, or services included in Talos images |
 
-## Install `talosctl`
+### Install `talosctl`
 
 macOS or Linux with Homebrew:
 
@@ -54,7 +58,7 @@ talosctl --help
 
 Keep the `talosctl` client version aligned with the Talos version being operated, especially while generating machine configurations or performing upgrades.
 
-## Inspect client context before operating
+### Inspect client context before operating
 
 ```bash
 talosctl config contexts
@@ -76,7 +80,7 @@ talosctl --context <context> \
 > [!CAUTION]
 > Endpoints and nodes are different. Endpoints are API entry points; nodes are the machines the request acts on. Avoid leaving a destructive command dependent on an old default node list.
 
-## Local disposable cluster
+### Local disposable cluster
 
 Create a local Docker-backed Talos cluster:
 
@@ -99,7 +103,7 @@ talosctl cluster destroy
 
 Do not treat the local Docker quickstart as a production architecture reference.
 
-## Standalone cluster lifecycle
+### Standalone cluster lifecycle
 
 A normal standalone deployment follows this sequence:
 
@@ -153,7 +157,7 @@ KUBECONFIG=./kubeconfig kubectl get nodes -o wide
 > [!DANGER]
 > Bootstrap is a one-time cluster operation. Do not run it again on an already bootstrapped cluster unless performing a documented recovery procedure.
 
-## Read-only health checks
+### Read-only health checks
 
 Start with these commands before changing a node:
 
@@ -177,7 +181,7 @@ talosctl get rd
 talosctl get <resource-type> --output yaml
 ```
 
-## Services, logs, and support bundles
+### Services, logs, and support bundles
 
 List service state:
 
@@ -211,7 +215,7 @@ talosctl support \
 
 Support bundles can contain network topology, workload metadata, logs, and infrastructure details. Sanitize them before sharing outside the organization.
 
-## Inspect configuration and runtime resources
+### Inspect configuration and runtime resources
 
 ```bash
 talosctl get machineconfig --output yaml
@@ -229,7 +233,7 @@ talosctl netstat
 
 Resource names can change as APIs evolve. Use `talosctl get rd` to identify current resource definitions.
 
-## Patch machine configuration
+### Patch machine configuration
 
 Preview a configuration application:
 
@@ -269,7 +273,7 @@ talosctl apply-config \
 > [!WARNING]
 > A machine configuration is the source of truth for the node. Avoid interactive one-off edits that are not reflected in Git or the configuration-generation workflow.
 
-## Image Factory and system extensions
+### Image Factory and system extensions
 
 Talos Image Factory generates customized installation assets from a content-addressed schematic.
 
@@ -296,7 +300,7 @@ factory.talos.dev/metal-installer/<schematic-id>:<talos-version>
 
 Use the same intended schematic across installation media and the installer image so nodes do not unexpectedly lose required extensions during installation or upgrade.
 
-## Upgrade Talos Linux
+### Upgrade Talos Linux
 
 Before upgrading:
 
@@ -329,7 +333,7 @@ Operational sequence:
 > [!DANGER]
 > Never upgrade multiple control-plane nodes simultaneously without proving that etcd quorum remains available.
 
-## Upgrade Kubernetes
+### Upgrade Kubernetes
 
 ```bash
 talosctl upgrade-k8s \
@@ -339,7 +343,7 @@ talosctl upgrade-k8s \
 
 Review compatibility between the current Talos release and the target Kubernetes release before starting. Validate API health, node readiness, system pods, admission webhooks, networking, storage, and critical workloads afterward.
 
-## etcd inspection and backup
+### etcd inspection and backup
 
 Inspect members and status:
 
@@ -357,7 +361,7 @@ talosctl etcd snapshot ./etcd-$(date +%Y%m%d-%H%M%S).snapshot \
 
 Store snapshots outside the cluster, protect them as sensitive data, and test the recovery process.
 
-## Recover etcd from a snapshot
+### Recover etcd from a snapshot
 
 Recovery is a planned disaster-recovery operation, not a routine repair command.
 
@@ -378,7 +382,7 @@ Before recovery:
 > [!DANGER]
 > Incorrect etcd recovery can permanently replace newer cluster state or create split-brain conditions.
 
-## Reboot, shutdown, and rollback
+### Reboot, shutdown, and rollback
 
 ```bash
 talosctl reboot --nodes <node>
@@ -388,7 +392,7 @@ talosctl rollback --nodes <node>
 
 Use forced reboot or shutdown modes only when graceful teardown is impossible and the effect on workloads and etcd is understood.
 
-## Reset a node
+### Reset a node
 
 Inspect first:
 
@@ -416,7 +420,7 @@ talosctl reset \
 > [!DANGER]
 > `talosctl reset` is destructive. The default reset can wipe the machine, remove it from Kubernetes, and remove it from etcd. Cloud VMs may become unbootable when their system disk is wiped.
 
-## Secure Boot and disk encryption
+### Secure Boot and disk encryption
 
 Talos supports Secure Boot using signed Unified Kernel Images and can use TPM-backed LUKS2 keys for system-volume encryption.
 
@@ -434,7 +438,7 @@ Operational cautions:
 - encryption settings commonly apply during initial volume provisioning, not retroactively;
 - maintain tested recovery procedures before enabling encryption broadly.
 
-## Networking and KubeSpan
+### Networking and KubeSpan
 
 Talos networking is declared in machine configuration and exposed through API resources.
 
@@ -448,20 +452,7 @@ talosctl get time
 
 KubeSpan can provide encrypted node-to-node connectivity across networks. Treat it as part of the cluster design: document address selection, discovery dependencies, MTU, routing, failure behavior, and observability.
 
-## Troubleshooting workflow
-
-1. Confirm the active context, endpoints, and node targets.
-2. Check physical or virtual console state.
-3. Run `talosctl version`, `health`, `services`, and `dashboard`.
-4. Inspect `dmesg` and the relevant service logs.
-5. Verify network addresses, routes, DNS, and time synchronization.
-6. Check etcd membership and quorum on control-plane nodes.
-7. Check Kubernetes nodes and system pods.
-8. Compare the running machine configuration with the intended configuration.
-9. Collect a support bundle before destructive repair.
-10. Apply the least disruptive documented recovery action.
-
-## Common failure patterns
+### Common failure patterns
 
 | Symptom | Checks |
 |---|---|
@@ -474,7 +465,24 @@ KubeSpan can provide encrypted node-to-node connectivity across networks. Treat 
 | Node rejoins with old settings | Generated configuration, applied patch, reboot requirement, wrong target node |
 | etcd unhealthy | Member list, disk latency, quorum, time, network loss, alarms |
 
-## References
+## Troubleshooting workflow
+
+### Troubleshooting workflow
+
+1. Confirm the active context, endpoints, and node targets.
+2. Check physical or virtual console state.
+3. Run `talosctl version`, `health`, `services`, and `dashboard`.
+4. Inspect `dmesg` and the relevant service logs.
+5. Verify network addresses, routes, DNS, and time synchronization.
+6. Check etcd membership and quorum on control-plane nodes.
+7. Check Kubernetes nodes and system pods.
+8. Compare the running machine configuration with the intended configuration.
+9. Collect a support bundle before destructive repair.
+10. Apply the least disruptive documented recovery action.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
 
 - [Talos Linux documentation](https://docs.siderolabs.com/talos)
 - [Talos Linux 1.13 CLI reference](https://docs.siderolabs.com/talos/v1.13/reference/cli)

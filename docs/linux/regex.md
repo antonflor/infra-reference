@@ -5,7 +5,13 @@
 
 Regular expressions describe text patterns for searching, validation, extraction, and replacement. Engines differ significantly, so confirm whether the tool uses POSIX basic, POSIX extended, PCRE, JavaScript, Python, .NET, RE2, or another syntax.
 
-## Core tokens
+## Safety
+
+Confirm the regex engine and test matches and nonmatches before using a pattern for validation or replacement. Avoid unbounded expensive patterns on untrusted input and preview replacements before changing files.
+
+## Quick reference
+
+### Core tokens
 
 | Pattern | Meaning |
 |---|---|
@@ -23,10 +29,10 @@ Regular expressions describe text patterns for searching, validation, extraction
 | `{n,m}` | Between `n` and `m` repetitions |
 | `(...)` | Capturing group in many engines |
 | `(?:...)` | Noncapturing group where supported |
-| `a|b` | Alternation |
+| `a\|b` | Alternation |
 | `\` | Escape the next metacharacter |
 
-## Common shorthand classes
+### Common shorthand classes
 
 These are common in Perl-compatible engines but are not portable to every tool:
 
@@ -41,7 +47,7 @@ These are common in Perl-compatible engines but are not portable to every tool:
 
 POSIX tools may prefer classes such as `[[:digit:]]`, `[[:alnum:]]`, and `[[:space:]]`.
 
-## Greedy and lazy matching
+### Greedy and lazy matching
 
 Quantifiers are greedy by default in many engines:
 
@@ -51,7 +57,7 @@ Quantifiers are greedy by default in many engines:
 
 Lazy forms such as `.*?` are supported by many PCRE-style engines but not by traditional POSIX grep, sed, or awk regular expressions.
 
-## Lookaround
+### Lookaround
 
 Where supported:
 
@@ -64,7 +70,7 @@ Where supported:
 
 RE2-based tools and some other engines intentionally do not support lookaround or backreferences.
 
-## Practical examples
+### Practical examples
 
 Basic IPv4-shaped text, without validating numeric ranges:
 
@@ -84,7 +90,7 @@ Whitespace-only line:
 ^[[:space:]]*$
 ```
 
-## Safety and correctness
+### Safety and correctness
 
 - Avoid presenting a short regex as complete email, URL, IP, or security validation unless it truly implements the required grammar.
 - Anchor validation patterns with `^` and `$` or engine-specific full-match functions.
@@ -93,7 +99,9 @@ Whitespace-only line:
 - Prefer parsing libraries for structured formats and protocol identifiers.
 - Test normal, boundary, malformed, and adversarial inputs.
 
-## Troubleshooting
+## Troubleshooting workflow
+
+### Troubleshooting
 
 When a pattern behaves differently than expected, verify:
 
@@ -103,3 +111,9 @@ When a pattern behaves differently than expected, verify:
 4. multiline and dot-all flags;
 5. Unicode and locale behavior;
 6. whether the API searches, matches from the start, or requires a full match.
+
+After identifying the cause, apply the least disruptive correction and verify the original service or output. Record the change, verification result, and rollback state.
+
+## Official references
+
+- [POSIX regular expressions](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/basedefs/V1_chap09.html)

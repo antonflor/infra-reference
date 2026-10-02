@@ -5,7 +5,13 @@
 
 Corosync provides cluster membership, quorum, and group communication services. It is commonly paired with Pacemaker, which manages resources and service placement.
 
-## Core concepts
+## Safety
+
+Inspect membership, quorum, and link health before restarting Corosync. A service restart can affect quorum and resource availability; coordinate it with Pacemaker maintenance and preserve the current configuration.
+
+## Quick reference
+
+### Core concepts
 
 | Concept | Purpose |
 |---|---|
@@ -15,7 +21,7 @@ Corosync provides cluster membership, quorum, and group communication services. 
 | KNET | Common transport layer for node-to-node communication |
 | Votequorum | Quorum provider for node voting and expected-vote calculations |
 
-## Read-only inspection
+### Read-only inspection
 
 ```bash
 systemctl status corosync
@@ -34,7 +40,7 @@ pcs status
 
 Use the command available for the cluster's management stack.
 
-## Configuration locations
+### Configuration locations
 
 Common files and directories include:
 
@@ -49,7 +55,7 @@ Configuration normally defines node identities, transport addresses, quorum beha
 > [!WARNING]
 > Membership, quorum, vote, transport, and node-ID changes can split a cluster or cause resource fencing. Capture the current configuration and cluster state, verify fencing, and follow the platform's rolling-change procedure.
 
-## Quorum checks
+### Quorum checks
 
 ```bash
 corosync-quorumtool -s
@@ -67,7 +73,7 @@ Confirm:
 
 Do not casually configure a two-node cluster to ignore quorum. Pair the quorum design with functional fencing and application-specific failure testing.
 
-## Network troubleshooting
+### Network troubleshooting
 
 1. Confirm node addressing and name resolution.
 2. Check interface state, MTU, drops, and errors.
@@ -87,7 +93,7 @@ ping <peer-address>
 journalctl -u corosync --since '<time>'
 ```
 
-## Service control
+### Service control
 
 ```bash
 systemctl start corosync
@@ -99,10 +105,19 @@ systemctl enable corosync
 > [!CAUTION]
 > Stopping or restarting Corosync changes cluster membership and can trigger fencing or resource movement. Put the node into the appropriate maintenance or standby state through the cluster manager first.
 
-## Relationship to Pacemaker
+### Relationship to Pacemaker
 
 Corosync provides communication and membership; Pacemaker makes resource-management decisions. See [pacemaker.md](pacemaker.md) for resource and constraint operations.
 
-## References
+## Troubleshooting workflow
+
+1. Confirm the affected nodes, membership symptom, and failure time.
+2. Inspect link status and quorum using the read-only checks above.
+3. Collect Corosync, network, and Pacemaker logs and counters with timestamps.
+4. Compare node IDs, addresses, transport, and quorum configuration across nodes.
+5. Correct one identified configuration or network fault using the cluster maintenance procedure.
+6. Verify membership, quorum, and managed-service recovery; record the change and previous configuration.
+
+## Official references
 
 - [Corosync documentation](https://corosync.github.io/corosync/)
