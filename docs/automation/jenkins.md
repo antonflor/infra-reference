@@ -38,7 +38,7 @@ Jenkins is an open-source automation server that enables developers to build, te
   - Typically, Jenkins runs as a standalone application in its own process with the built-in Java servlet container/application server (Jetty).
 
 - **Accessing Jenkins**
-  - Jenkins can be accessed through a web interface at `http://<jenkins-server>:8080`.
+  - Jenkins listens on port 8080 by default (`http://<jenkins-server>:8080`); production controllers should be reached over HTTPS through a reverse proxy or a configured TLS listener.
 
 - **Creating a Job**
   - In Jenkins, jobs can be created through the web interface, typically by selecting "New Item", then choosing the job type.
@@ -74,22 +74,42 @@ Jenkins is an open-source automation server that enables developers to build, te
         stages {
             stage('Build') {
                 steps {
-                    // Build steps go here
+                    sh 'make build'
                 }
             }
             stage('Test') {
                 steps {
-                    // Test steps go here
+                    sh 'make test'
                 }
             }
             stage('Deploy') {
                 steps {
-                    // Deploy steps go here
+                    echo 'Deploy steps go here'
                 }
             }
         }
     }
     ```
+  - Every `steps` block needs at least one step; a block that holds only comments fails validation.
+
+- **Validate a Jenkinsfile before committing**
+  - Use the controller's declarative linter. Authenticate with a user API token, never a password:
+    ```bash
+    curl --user <user>:<api-token> -X POST \
+      -F "jenkinsfile=<Jenkinsfile" \
+      https://<jenkins-server>/pipeline-model-converter/validate
+    ```
+
+- **Replay and restart**
+  - `Replay` reruns a build with an edited Pipeline script without a commit; `Restart from Stage` reruns a declarative Pipeline from a chosen top-level stage using the original inputs.
+
+### Controller Maintenance Notes
+
+- Jenkins releases as a weekly line and a Long-Term Support (LTS) line; use LTS for anything shared. Current releases require Java 17 or 21 on the controller and agents.
+- Do not run builds on the built-in node; set its executors to 0 and use agents.
+- Keep the controller URL behind TLS. The plain `http://<jenkins-server>:8080` listener is only the package default.
+- Read the plugin's security advisories and take a `JENKINS_HOME` backup before updating plugins; plugin updates are the most common cause of a broken controller.
+- Configuration as Code (JCasC) and the Job DSL or multibranch Pipelines keep controller and job configuration in source control.
 
 ### Advanced Features
 

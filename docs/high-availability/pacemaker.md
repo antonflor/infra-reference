@@ -2,7 +2,7 @@
 
 > **Status:** Legacy reference — technical validation pending
 
-A reference for Pacemaker high-availability cluster inspection, resources, nodes, constraints, and fencing using `pcs`. Command syntax varies by `pcs` and Pacemaker release.
+A reference for Pacemaker high-availability cluster inspection, resources, nodes, constraints, and fencing using `pcs`. Command syntax varies by `pcs` and Pacemaker release. See [Corosync](corosync.md) for the membership and quorum layer.
 
 ## Safety
 
@@ -10,77 +10,81 @@ Inspect cluster membership, quorum, resource placement, and fencing before chang
 
 ## Quick reference
 
-### Key Features of Pacemaker:
+### Release notes
 
-1. **Resource Management**: Manages various types of services as resources.
-2. **Cluster Management**: Detects and responds to node failures.
-3. **Failover and Recovery**: Automatically relocates services during failures.
-4. **Resource Grouping**: Groups resources for collective management.
-5. **Constraints**: Supports various constraints for resource management.
-6. **STONITH**: Implements fencing mechanism for cluster safety.
-7. **Integration with Corosync**: Often used with Corosync for messaging and membership.
+Syntax below is for `pcs` 0.10 and 0.11 (RHEL 8 and 9 families, current Debian and Ubuntu). Older forms such as `pcs resource show`, `pcs stonith show`, `pcs cluster standby`, and `pcs property list` were removed or renamed; on SUSE, the equivalent tool is `crmsh`.
 
-### Cluster Status and Management
+### Cluster status and lifecycle
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `pcs status` | Displays the current status of the cluster. |
-| `pcs status` | `pcs cluster start --all` | Starts all cluster services on all nodes. **Caution:** Starts services across the cluster. |
-| `pcs status` | `pcs cluster stop --all` | Stops all cluster services on all nodes. **Caution:** Disruptive: stops cluster services across all nodes. |
-| `pcs status` | `pcs cluster enable --all` | Enables cluster services to start at boot on all nodes. **Caution:** Changes cluster startup behavior. |
-| `pcs status` | `pcs cluster disable --all` | Disables cluster services from starting at boot. **Caution:** Disables cluster startup at boot. |
+| — | `pcs status --full` | Shows nodes, resources, failed actions, and daemon state. |
+| — | `pcs quorum status` | Shows votes, quorum, and membership. |
+| — | `crm_mon -1r` | One-shot status including inactive resources. |
+| `pcs status` | `pcs cluster start --all` | Starts Corosync and Pacemaker on every node. **Caution:** Resources start as soon as quorum forms. |
+| `pcs status` | `pcs cluster stop --all` | Stops cluster services everywhere. **Caution:** Disruptive: stops every managed resource. |
+| `pcs status` | `pcs cluster enable --all` | Starts cluster services at boot. **Caution:** A rebooted node rejoins automatically. |
+| `pcs status` | `pcs cluster disable --all` | Stops cluster services starting at boot. **Caution:** Nodes stay out of the cluster after reboot until started. |
 
-### Resource Management
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `pcs resource show` | Lists all cluster resources. |
-| `pcs status` | `pcs resource create <resource-id> <agent> <options>` | Creates a new cluster resource. **Caution:** Changes the cluster resource configuration. |
-| `pcs status` | `pcs resource delete <resource-id>` | Deletes a cluster resource. **Caution:** Destructive: removes the resource definition and can stop service. |
-| `pcs status` | `pcs resource manage <resource-id>` | Manages a resource (enables cluster management). **Caution:** Resumes cluster control of the resource. |
-| `pcs status` | `pcs resource unmanage <resource-id>` | Unmanages a resource (disables cluster management). **Caution:** Suspends cluster control of the resource. |
-
-### Node Management
+### Resources
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `pcs status nodes` | Shows the status of all nodes in the cluster. |
-| `pcs status` | `pcs cluster standby <node>` | Sets a cluster node to standby mode. **Caution:** Evacuates resources from the node. |
-| `pcs status` | `pcs cluster unstandby <node>` | Removes a cluster node from standby mode. **Caution:** Allows resource placement on the node. |
-| — | `pcs cluster cib` | Outputs the current cluster configuration. |
+| — | `pcs resource status` | Lists resources and where they run. |
+| — | `pcs resource config <resource-id>` | Shows a resource definition and its operations. |
+| — | `pcs resource describe <agent>` | Lists the parameters an agent accepts. |
+| `pcs resource status` | `pcs resource create <resource-id> <agent> <options>` | Creates a resource. **Caution:** It starts immediately unless created with `--disabled`. |
+| `pcs resource config <resource-id>` | `pcs resource update <resource-id> <option>=<value>` | Changes resource parameters. **Caution:** Many changes restart the resource. |
+| `pcs resource status` | `pcs resource move <resource-id> <node>` | Moves a resource. **Caution:** Disruptive; on `pcs` 0.10 it leaves a location constraint that `pcs resource clear <resource-id>` removes. |
+| `pcs resource status` | `pcs resource disable <resource-id>` | Stops a resource and keeps it stopped. **Caution:** Disruptive. |
+| `pcs resource status` | `pcs resource enable <resource-id>` | Allows the resource to start again. |
+| `pcs resource status` | `pcs resource unmanage <resource-id>` | Stops Pacemaker from starting, stopping, or recovering the resource. **Caution:** No failover while unmanaged. |
+| `pcs resource status` | `pcs resource manage <resource-id>` | Returns the resource to cluster control. **Caution:** Pacemaker acts on the state it finds. |
+| `pcs resource failcount show <resource-id>` | `pcs resource cleanup <resource-id>` | Clears failure history so the resource can be retried. **Caution:** Removes diagnostic evidence and can trigger a start. |
+| `pcs resource config <resource-id>` | `pcs resource delete <resource-id>` | Deletes a resource. **Caution:** Destructive: stops the service and removes its definition and constraints. |
 
-### Constraint Management
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `pcs constraint list` | Lists all constraints in the cluster. |
-| `pcs status` | `pcs constraint create <constraint-options>` | Creates a new constraint. **Caution:** Changes resource placement. |
-| `pcs status` | `pcs constraint remove <constraint-id>` | Removes a constraint. **Caution:** Removes placement constraints. |
-
-### Cluster Configuration
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `pcs property list` | Lists all cluster properties. |
-| `pcs status` | `pcs property set <property-name>=<value>` | Sets a cluster property. **Caution:** Changes cluster behavior; review quorum and fencing effects. |
-| — | `pcs stonith show` | Displays STONITH (fencing) devices and status. |
-| `pcs status` | `pcs stonith create <stonith-id> <agent> <options>` | Creates a new STONITH device. **Caution:** Changes fencing configuration. |
-| `pcs status` | `pcs stonith delete <stonith-id>` | Deletes a STONITH device. **Caution:** Destructive: removes a fencing definition and can compromise recovery. |
-
-### Troubleshooting and Logs
+### Nodes
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `pcs status failures` | Shows all failed actions in the cluster. |
-| — | `corosync-cfgtool -s` | Displays the status of the Corosync ring. |
-| — | `crm_mon -1` | Displays a one-time status of the current cluster. |
+| — | `pcs status nodes` | Shows online, standby, and offline nodes. |
+| `pcs status` | `pcs node standby <node>` | Puts a node in standby. **Caution:** Moves its resources elsewhere. |
+| `pcs status` | `pcs node unstandby <node>` | Returns a node to service. **Caution:** Resources can move back depending on stickiness. |
+| `pcs status` | `pcs node maintenance <node>` | Leaves resources running but unmanaged on that node. **Caution:** No recovery for those resources. |
+| `pcs status` | `pcs node unmaintenance <node>` | Ends node maintenance. |
 
-### Tips for Using Pacemaker
+### Constraints
 
-- **Regular Backups**: Regularly backup your cluster configuration.
-- **Monitoring**: Continuously monitor cluster health and performance.
-- **Documentation**: Maintain detailed documentation of your cluster setup.
-- **Testing**: Regularly test failover and recovery procedures.
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `pcs constraint config --full` | Lists constraints with IDs (`pcs constraint --full` on 0.10). |
+| `pcs constraint config` | `pcs constraint location <resource-id> prefers <node>=<score>` | Adds a location preference. **Caution:** Can move the resource. |
+| `pcs constraint config` | `pcs constraint order <first-resource> then <second-resource>` | Adds a start order. **Caution:** Can restart dependent resources. |
+| `pcs constraint config` | `pcs constraint colocation add <resource> with <other-resource> <score>` | Keeps resources together or apart. **Caution:** Can move resources. |
+| `pcs constraint config --full` | `pcs constraint delete <constraint-id>` | Removes a constraint. **Caution:** Placement is recalculated. |
+
+### Properties, fencing, and configuration backup
+
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `pcs property config` | Lists cluster properties (`pcs property list` on 0.10). |
+| `pcs property config` | `pcs property set <property>=<value>` | Sets a cluster property. **Caution:** Review quorum and fencing effects; never set `stonith-enabled=false` on a cluster with shared data. |
+| — | `pcs stonith status` | Shows fence devices and their state. |
+| — | `pcs stonith config` | Shows fence device definitions. |
+| `pcs stonith status` | `pcs stonith create <stonith-id> <agent> <options>` | Creates a fence device. **Caution:** Changes fencing behavior. |
+| `pcs stonith config` | `pcs stonith delete <stonith-id>` | Deletes a fence device. **Caution:** Destructive: can leave nodes unfenceable. |
+| `pcs status` | `pcs stonith fence <node>` | Fences a node now. **Caution:** Destructive: power-cycles or isolates the node. |
+| — | `pcs cluster cib > <file.xml>` | Saves the live CIB for review or rollback. |
+| — | `pcs config backup <file>` | Archives cluster configuration files from all nodes. |
+
+### Logs and membership
+
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `corosync-cfgtool -s` | Shows link status for the local node. |
+| — | `corosync-quorumtool -s` | Shows quorum state as Corosync sees it. |
+| — | `journalctl -u pacemaker -u corosync --since "<time>"` | Reads daemon logs around an event. |
+| — | `crm_verify -L -V` | Checks the live configuration for errors and warnings. |
 
 ## Troubleshooting workflow
 

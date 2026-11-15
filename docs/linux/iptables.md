@@ -3,7 +3,7 @@
 > **Applies to:** Linux systems using the iptables command interface
 > **Last reviewed:** 2026-07-14
 
-`iptables` is still widely used, but many current Linux distributions use the nftables framework underneath or prefer the native `nft` command. Confirm whether the host uses `iptables-legacy`, `iptables-nft`, firewalld, UFW, or native nftables before changing rules.
+`iptables` is still widely used, but many current Linux distributions use the nftables framework underneath or prefer the native `nft` command. Confirm whether the host uses `iptables-legacy`, `iptables-nft`, firewalld, UFW, or native nftables before changing rules. See [nftables](nftables.md) for the native `nft` workflow.
 
 ## Safety
 

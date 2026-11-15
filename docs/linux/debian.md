@@ -10,95 +10,91 @@ Inspect package, service, process, and filesystem state before changing it. Pack
 
 ## Quick reference
 
-### Package Management
+### Release notes
+
+Debian 13 (trixie) is the current stable release and Debian 12 (bookworm) is oldstable. Recent releases ship APT 3 and prefer deb822 source files in `/etc/apt/sources.list.d/*.sources`; `apt modernize-sources` converts the older one-line format. `apt` is the interactive front end; use `apt-get` and `apt-cache` in scripts because their output is stable.
+
+### Package inspection
+
+| Command | Purpose |
+|---|---|
+| `cat /etc/os-release` | Release name and version (`lsb_release -a` needs the `lsb-release` package). |
+| `apt list --upgradable` | Packages with a newer candidate after `apt update`. |
+| `apt policy <package>` | Installed version, candidate, and which repository supplies it. |
+| `apt show <package>` | Package description and dependencies. |
+| `apt search <keyword>` | Searches package names and descriptions. |
+| `apt-mark showhold` | Packages held back from upgrades. |
+| `dpkg -l '<pattern>'` | Installed packages matching a pattern. |
+| `dpkg -s <package>` | Status and version of one installed package. |
+| `dpkg -L <package>` | Files installed by a package. |
+| `dpkg -S <file-path>` | Package that owns a file. |
+| `less /var/log/apt/history.log` | What APT installed, upgraded, or removed, and when. |
+
+### Package changes
+
+Add `-s` (simulate) to any `apt` or `apt-get` change to see the full transaction first.
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| `dpkg -l` | `sudo apt update` | Updates the package index. **Caution:** Changes the local package index. |
-| `dpkg -l` | `sudo apt upgrade` | Upgrades all upgradable packages. **Caution:** Changes installed packages and may restart services. |
-| `dpkg -l` | `sudo apt full-upgrade` | Upgrades packages with auto-handling of dependencies. **Caution:** Can remove packages while resolving dependencies; review the proposed changes. |
-| `dpkg -l` | `sudo apt install <package-name>` | Installs a package. **Caution:** Changes installed packages. |
-| `dpkg -l` | `sudo apt remove <package-name>` | Removes a package without removing dependencies. **Caution:** Destructive: removes the selected package. |
-| `dpkg -l` | `sudo apt purge <package-name>` | Removes a package along with its configuration files. **Caution:** Destructive: removes the package and its configuration. |
-| `dpkg -l` | `sudo apt autoremove` | Automatically removes all unused packages. **Caution:** Destructive: removes packages classified as unused. |
-| `dpkg -l` | `sudo apt-get dist-upgrade` | Upgrades the distribution to the latest release. **Caution:** May add or remove packages; review the proposed dependency changes. |
-| — | `sudo apt-cache search <keyword>` | Searches the package database for a keyword. |
-| — | `sudo apt-cache show <package-name>` | Shows package details. |
+| — | `sudo apt update` | Refreshes package indexes. Changes no installed packages. |
+| `apt list --upgradable` | `sudo apt upgrade` | Upgrades packages without removing any. **Caution:** Can restart services. |
+| `apt -s full-upgrade` | `sudo apt full-upgrade` | Upgrades and allows removals to resolve dependencies (same as `apt-get dist-upgrade`). **Caution:** Review removals; this is the command for a release upgrade after sources are changed, not a release upgrade by itself. |
+| `apt policy <package>` | `sudo apt install <package>` | Installs or upgrades one package. **Caution:** Pulls in dependencies. |
+| `apt -s remove <package>` | `sudo apt remove <package>` | Removes a package and keeps its configuration. **Caution:** Can remove packages that depend on it. |
+| `apt -s purge <package>` | `sudo apt purge <package>` | Removes a package and its configuration files. **Caution:** Destructive for system-wide configuration. |
+| `apt -s autoremove` | `sudo apt autoremove` | Removes automatically installed packages nothing depends on. **Caution:** Review the list; old kernels are included. |
+| `apt policy <package>` | `sudo apt-mark hold <package>` | Pins a package at its current version (`unhold` reverses it). **Caution:** Also blocks security updates for it. |
+| `dpkg -I <package-file.deb>` | `sudo apt install ./<package-file.deb>` | Installs a local package and resolves dependencies, unlike `dpkg -i`. **Caution:** Verify the source of the file. |
+| `dpkg --audit` | `sudo dpkg --configure -a` | Finishes an interrupted installation. **Caution:** Runs pending maintainer scripts. |
 
-### dpkg (Debian Package Management)
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `dpkg -l` | Lists all installed packages. |
-| `dpkg -l` | `dpkg -i <package-file.deb>` | Installs a .deb package file. **Caution:** Changes installed packages. |
-| `dpkg -l` | `dpkg -r <package-name>` | Removes a .deb package. **Caution:** Destructive: removes an installed package. |
-| `dpkg -l` | `dpkg -P <package-name>` | Purges a .deb package. **Caution:** Destructive: removes the package and configuration. |
-| — | `dpkg -s <package-name>` | Shows package info and status. |
-| — | `dpkg -L <package-name>` | Lists files installed by a package. |
-| — | `dpkg -S <file-path>` | Finds the package that installed a file. |
-
-### System Information and Management
+### Services and logs
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `uname -a` | Displays kernel and system information. |
-| — | `lsb_release -a` | Shows distribution information. |
-| — | `hostnamectl` | Shows or sets the system hostname. |
+| — | `systemctl status <service>` | State, recent log lines, and main PID. |
+| — | `systemctl --failed` | Units in a failed state. |
+| — | `journalctl -u <service> --since "<time>"` | Logs for one unit from a point in time. |
+| — | `journalctl -fu <service>` | Follows a unit's logs. |
+| — | `journalctl -p err -b` | Errors since the current boot. |
+| `systemctl status <service>` | `sudo systemctl restart <service>` | Restarts a service. **Caution:** Disruptive; prefer `reload` when the service supports it. |
+| `systemctl status <service>` | `sudo systemctl stop <service>` | Stops a service. **Caution:** Disruptive. |
+| `systemctl is-enabled <service>` | `sudo systemctl enable --now <service>` | Enables at boot and starts now. **Caution:** Changes startup behavior. |
+| `systemctl is-enabled <service>` | `sudo systemctl disable --now <service>` | Disables at boot and stops now. **Caution:** Disruptive. |
+| — | `needrestart` | Lists services still running old libraries after an upgrade, if the package is installed. |
 
-### Service Management
+### System state
 
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `systemctl status <service-name>` | Checks the status of a service. |
-| `dpkg -l` | `systemctl start <service-name>` | Starts a service. **Caution:** Changes service state; inspect `systemctl status <service-name>` first. |
-| `dpkg -l` | `systemctl stop <service-name>` | Stops a service. **Caution:** Disruptive: stops the service; inspect `systemctl status <service-name>` first. |
-| `dpkg -l` | `systemctl restart <service-name>` | Restarts a service. **Caution:** Disruptive: restarts the service; inspect `systemctl status <service-name>` first. |
-| `dpkg -l` | `systemctl enable <service-name>` | Enables a service to start on boot. **Caution:** Changes startup behavior; inspect `systemctl status <service-name>` first. |
-| `dpkg -l` | `systemctl disable <service-name>` | Disables a service from starting on boot. **Caution:** Disables startup; inspect `systemctl status <service-name>` first. |
+| Command | Purpose |
+|---|---|
+| `uname -r` | Running kernel version. |
+| `hostnamectl` | Hostname, machine ID, and virtualization. |
+| `df -hT` | Filesystem usage and type. |
+| `du -xsh <directory>` | Size of a directory on one filesystem. |
+| `free -h` | Memory and swap. |
+| `ps aux --sort=-%mem` | Processes, largest memory users first. |
+| `ss -tulpn` | Listening sockets and owning processes. |
+| `ip -br address` | Interface addresses in brief form. |
+| `[ -f /var/run/reboot-required ] && cat /var/run/reboot-required.pkgs` | Whether an upgrade is waiting on a reboot. |
 
-### System Monitoring and Logs
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `journalctl -xe` | Views detailed system logs. |
-| — | `journalctl -fu <service-name>` | Follows the logs for a specific service. |
-| — | `top` | Displays real-time system resource usage. |
-| — | `htop` | An interactive process viewer (if installed). |
-| — | `df -h` | Shows disk space usage. |
-| — | `du -sh <directory>` | Shows the size of a directory. |
-| — | `free -m` | Displays memory usage in MB. |
-| — | `ps aux` | Shows running processes. |
-
-### Process and Job Management
+### Processes and scheduled jobs
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| `dpkg -l` | `kill <pid>` | Kills a process by its PID. **Caution:** Disruptive: signals a process; inspect `ps aux` first. |
-| `dpkg -l` | `killall <process-name>` | Kills all processes with the given name. **Caution:** Disruptive: targets every process with this name; inspect `ps aux` first. |
-| `dpkg -l` | `crontab -e` | Edits the current user's cron jobs. **Caution:** Changes scheduled tasks; inspect `crontab -l` first. |
-| — | `crontab -l` | Lists the current user's cron jobs. |
+| `ps -fp <pid>` | `kill <pid>` | Sends SIGTERM. **Caution:** Disruptive; use `kill -9` only when a process ignores SIGTERM. |
+| `pgrep -a <process-name>` | `pkill <process-name>` | Signals every matching process. **Caution:** Disruptive; check the match list first. |
+| `crontab -l` | `crontab -e` | Edits the current user's cron jobs. **Caution:** Changes scheduled tasks. |
+| — | `systemctl list-timers` | systemd timers, including APT's daily jobs. |
 
-### File and Directory Operations
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `find <directory> -name <filename>` | Searches for a file in a directory. |
-| — | `grep <pattern> <file>` | Searches inside a file for a pattern. |
-| — | `tar -czvf <archive.tar.gz> <directory>` | Creates a gzipped tar archive. |
-| `dpkg -l` | `tar -xzvf <archive.tar.gz>` | Extracts a gzipped tar archive. **Caution:** Can overwrite files during extraction; inspect `tar -tzvf <archive.tar.gz>` first. |
-| `dpkg -l` | `chmod <permissions> <file>` | Changes file permissions. **Caution:** Changes permissions; inspect `ls -l <file>` first. |
-| `dpkg -l` | `chown <user>:<group> <file>` | Changes file owner and group. **Caution:** Changes ownership; inspect `ls -l <file>` first. |
-
-### Networking and Remote Access
+### Files and transfers
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `ssh <user>@<host>` | Connects to a remote host via SSH. |
-| `dpkg -l` | `scp <source> <user>@<host>:<destination>` | Copies files over SSH. **Caution:** Can overwrite destination files; inspect the destination first. |
-| `dpkg -l` | `rsync -avz <source> <user>@<host>:<destination>` | Syncs files/directories over SSH. **Caution:** Changes destination files; inspect a dry run first. |
-| — | `wget <url>` | Downloads files from the internet. |
-| — | `curl -O <url>` | Fetches a file from a URL. |
-| — | `iptables -L` | Lists all firewall rules. |
+| `tar -tzf <archive.tar.gz>` | `tar -xzf <archive.tar.gz> -C <directory>` | Extracts an archive. **Caution:** Overwrites existing files of the same name. |
+| `ls -l <file>` | `chmod <mode> <file>` | Changes permissions. **Caution:** `-R` on the wrong path is hard to undo. |
+| `ls -l <file>` | `chown <user>:<group> <file>` | Changes ownership. **Caution:** Same as above. |
+| `rsync -avzn <source> <user>@<host>:<destination>` | `rsync -avz <source> <user>@<host>:<destination>` | Copies changed files over SSH. **Caution:** `--delete` removes files at the destination; always dry-run it. |
+
+See [iptables](iptables.md) and [nftables](nftables.md) for packet filtering, and [scp](scp.md) for file copy over SSH.
 
 ## Troubleshooting workflow
 
@@ -112,3 +108,4 @@ Inspect package, service, process, and filesystem state before changing it. Pack
 ## Official references
 
 - [Debian Reference](https://www.debian.org/doc/manuals/debian-reference/)
+- [Debian release notes](https://www.debian.org/releases/stable/releasenotes)

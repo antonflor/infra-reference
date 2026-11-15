@@ -2,7 +2,7 @@
 
 > **Status:** Legacy reference — technical validation pending
 
-A reference for Apache Kafka topics, producers, consumers, consumer groups, and administration. The inherited examples cover KRaft and legacy ZooKeeper deployments; use the documentation for the exact installed release.
+A reference for Apache Kafka topics, producers, consumers, consumer groups, and administration. Examples target Kafka 4.x, which runs only in KRaft mode; notes mark where 3.x clusters differ. Use the documentation for the exact installed release.
 
 ## Safety
 
@@ -14,7 +14,20 @@ Confirm the cluster, topic, and consumer group before administration. Formatting
 
 Apache Kafka is a distributed streaming platform that enables building real-time data pipelines and streaming applications. It is widely used for high-throughput, fault-tolerant messaging, as well as enabling stream processing. Kafka works on the concept of topics, producers, and consumers.
 
-> **Note on Versions**: Kafka 2.8+ introduced KRaft mode (Kafka Raft), which eliminates the dependency on ZooKeeper. Kafka 3.3+ made KRaft production-ready, and ZooKeeper mode is deprecated as of Kafka 3.5+. KRaft is now the recommended deployment mode. Commands that previously used `--zookeeper` now use `--bootstrap-server`.
+> **Note on versions**: Kafka 4.0 removed ZooKeeper mode; every 4.x cluster uses KRaft. Kafka 3.9 is the last release line that can run ZooKeeper and is the bridge release for migrating to KRaft before a 4.x upgrade. The `--zookeeper` option on the admin tools and `--broker-list` on the console producer are gone in 4.x; use `--bootstrap-server`.
+>
+> Kafka 4.2 renamed several tool options for consistency. The old names still work with a deprecation warning and are scheduled for removal in 5.0:
+>
+> | Tool | Older option | 4.2+ option |
+> |---|---|---|
+> | `kafka-console-producer.sh` | `--property` | `--reader-property` |
+> | `kafka-console-consumer.sh` | `--property` | `--formatter-property` |
+> | console tools | `--producer-property`, `--consumer-property` | `--command-property` |
+> | console and perf tools | `--producer.config`, `--consumer.config` | `--command-config` |
+> | `kafka-producer-perf-test.sh` | `--producer-props` | `--command-property` |
+> | `kafka-consumer-perf-test.sh` | `--messages` | `--num-records` |
+>
+> The examples below use the older spellings where they still run on both 3.x and 4.x.
 
 ### Key Concepts
 
@@ -28,23 +41,24 @@ Apache Kafka is a distributed streaming platform that enables building real-time
 - **Replication Factor**: The number of copies of each partition maintained across brokers for fault tolerance.
 - **Offset**: A unique identifier of records within a partition. Consumers track their position using offsets.
 - **Leader / Follower**: Each partition has one leader broker and zero or more follower brokers. Followers replicate the leader.
-- **ZooKeeper** *(Deprecated)*: Previously used for coordinating and managing Kafka brokers. Replaced by KRaft.
+- **ZooKeeper** *(removed in 4.0)*: Coordinated brokers in Kafka 3.x and earlier. Replaced by KRaft.
 - **KRaft (Kafka Raft)**: Kafka's built-in consensus mechanism that replaces ZooKeeper. Uses a metadata quorum within the Kafka cluster itself.
+- **Share Group**: Queue-style consumption (Queues for Kafka, production-ready in 4.2) where records are delivered and acknowledged individually instead of by partition assignment.
 
 ### KRaft vs ZooKeeper Mode
 
 | Feature | KRaft Mode | ZooKeeper Mode |
 |---|---|---|
 | External dependency | None | Requires ZooKeeper cluster |
-| Recommended since | Kafka 3.3+ | Kafka < 3.5 |
-| Status | Current standard | Deprecated (Kafka 3.5+) |
+| Available in | Kafka 3.3+ (production-ready) | Kafka 3.9 and earlier |
+| Status | Only mode in Kafka 4.x | Removed in Kafka 4.0 |
 | Metadata storage | Inside Kafka (controller quorum) | Separate ZooKeeper nodes |
 | Operational complexity | Lower | Higher |
 | Startup command | `kafka-server-start.sh` | `zookeeper-server-start.sh` + `kafka-server-start.sh` |
 
 ### Basic Kafka Operations
 
-#### Starting Kafka (KRaft Mode — Recommended)
+#### Starting Kafka (KRaft Mode)
 
 ```bash
 # Generate a cluster UUID
@@ -53,13 +67,17 @@ KAFKA_CLUSTER_ID="$(kafka-storage.sh random-uuid)"
 # Inspect the configured storage paths before formatting; use only a new disposable data directory.
 # WARNING: storage formatting changes broker metadata; never reformat existing cluster storage.
 # Format the storage directory
-kafka-storage.sh format -t $KAFKA_CLUSTER_ID -c /path/to/kraft-server.properties
+kafka-storage.sh format --standalone -t "$KAFKA_CLUSTER_ID" -c config/server.properties
+# --standalone bootstraps a single-controller dynamic quorum (3.9+); multi-controller
+# clusters use --initial-controllers or a static controller.quorum.voters setting instead.
 
 # Start Kafka
-kafka-server-start.sh /path/to/kraft-server.properties
+kafka-server-start.sh config/server.properties
 ```
 
-#### Starting Kafka (Legacy ZooKeeper Mode — Deprecated)
+#### Starting Kafka (ZooKeeper Mode — Kafka 3.x only)
+
+ZooKeeper mode does not exist in Kafka 4.x. Keep this only for operating a 3.x cluster until it is migrated.
 
 ```bash
 # Start ZooKeeper first
@@ -73,16 +91,8 @@ kafka-server-start.sh config/server.properties
 
 **Create a Topic**
 ```bash
-# KRaft / Modern Kafka (3.0+)
 kafka-topics.sh --create \
   --bootstrap-server <broker-host:port> \
-  --replication-factor <number> \
-  --partitions <number> \
-  --topic <topic-name>
-
-# Legacy (deprecated)
-kafka-topics.sh --create \
-  --zookeeper <zookeeper-host:port> \
   --replication-factor <number> \
   --partitions <number> \
   --topic <topic-name>
@@ -114,11 +124,11 @@ kafka-topics.sh --alter --topic <topic-name> --partitions <new-number> --bootstr
 
 ```bash
 # Basic console producer
-kafka-console-producer.sh --broker-list <broker-list> --topic <topic-name>
+kafka-console-producer.sh --bootstrap-server <broker-list> --topic <topic-name>
 
 # With key-value pairs
 kafka-console-producer.sh \
-  --broker-list <broker-list> \
+  --bootstrap-server <broker-list> \
   --topic <topic-name> \
   --property "key.separator=:" \
   --property "parse.key=true"
@@ -239,11 +249,18 @@ kafka-consumer-groups.sh --bootstrap-server <broker-list> --delete --group <grou
 #### Cluster and Broker Management
 
 ```bash
-# List brokers (KRaft)
+# List brokers and the API versions they support
+kafka-broker-api-versions.sh --bootstrap-server <broker-list>
+
+# Controller quorum: leader, voters, observers, and high watermark
 kafka-metadata-quorum.sh --bootstrap-server <broker-list> describe --status
 
-# Describe cluster metadata
+# Per-replica lag of the metadata log
 kafka-metadata-quorum.sh --bootstrap-server <broker-list> describe --replication
+
+# Partitions that are under-replicated or without a leader
+kafka-topics.sh --describe --under-replicated-partitions --bootstrap-server <broker-list>
+kafka-topics.sh --describe --unavailable-partitions --bootstrap-server <broker-list>
 
 # Check broker configs
 kafka-configs.sh \
@@ -266,7 +283,7 @@ kafka-producer-perf-test.sh \
 
 # Consumer performance test
 kafka-consumer-perf-test.sh \
-  --broker-list <broker-list> \
+  --bootstrap-server <broker-list> \
   --topic <topic-name> \
   --messages 1000000
 ```
@@ -328,8 +345,8 @@ curl -X DELETE http://localhost:8083/connectors/<connector-name>
 |---|---|---|
 | `bootstrap.servers` | Broker list | `<broker-host-1>:9092,<broker-host-2>:9092` |
 | `acks` | Acknowledgment level | `all` (safest), `1`, `0` |
-| `retries` | Number of retries | `3` |
-| `compression.type` | Message compression | `gzip`, `snappy`, `lz4` |
+| `enable.idempotence` | Prevents duplicates on retry; on by default since 3.0 | `true` |
+| `compression.type` | Message compression | `zstd`, `lz4`, `snappy`, `gzip` |
 | `batch.size` | Batch size in bytes | `16384` |
 
 **Consumer**
@@ -347,7 +364,7 @@ curl -X DELETE http://localhost:8083/connectors/<connector-name>
 - **Choose Partition Count Wisely**: Partitions can be increased but not decreased. Plan capacity upfront.
 - **Replication Factor**: Use at least 3 for production topics. Set `min.insync.replicas=2` with `acks=all` for durability.
 - **Retention Policies**: Set `retention.ms` and `retention.bytes` on topics to control data lifetime.
-- **Use KRaft for New Deployments**: Avoid ZooKeeper for any new Kafka cluster; it is deprecated.
+- **Plan the KRaft migration**: A ZooKeeper-based cluster must migrate to KRaft on 3.9 before it can upgrade to 4.x; there is no direct upgrade path.
 - **Security**: Enable TLS for encryption in transit and SASL for authentication in production environments.
 
 ## Troubleshooting workflow
@@ -362,3 +379,4 @@ curl -X DELETE http://localhost:8083/connectors/<connector-name>
 ## Official references
 
 - [Apache Kafka documentation](https://kafka.apache.org/documentation/)
+- [Apache Kafka upgrade notes](https://kafka.apache.org/documentation/#upgrade)
