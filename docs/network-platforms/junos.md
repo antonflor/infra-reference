@@ -36,8 +36,8 @@ Inspect active state and the candidate diff before committing. Routing-session r
 | — | `show route table mpls.0` | Displays the MPLS routing table. |
 | — | `show mpls lsp extensive` | Shows detailed information about MPLS LSPs. |
 | — | `show mpls lsp statistics` | Displays statistics for MPLS LSPs. |
-| `show route summary` | `traceoptions flag mpls` | Enables MPLS-specific tracing options for debugging. **Caution:** Changes diagnostics; limit tracing and restore the previous settings. |
-| — | `show route table inet.3` | Displays the MPLS forwarding table. |
+| `show route summary` | `set protocols mpls traceoptions flag state` | Configuration statement that traces MPLS state changes to a file. **Caution:** Changes candidate configuration; remove it after debugging. |
+| — | `show route table inet.3` | Displays LSP next hops that BGP uses to resolve its routes; the label table itself is `mpls.0`. |
 | — | `show mpls lsp name <lsp-name> detail` | Shows detailed information about a specific MPLS LSP. |
 | `show route summary` | `set protocols mpls label-switched-path <lsp-name> to <destination>` | Configures an MPLS LSP. **Caution:** Changes candidate protocol configuration. |
 | — | `monitor traffic interface <interface-name> no-resolve` | Monitors real-time traffic on a specified interface, useful for MPLS troubleshooting. |
@@ -63,12 +63,12 @@ Inspect active state and the candidate diff before committing. Routing-session r
 | — | `show route table inet6.0` | Displays the IPv6 unicast routing table. |
 | — | `show route table <table-name> extensive` | Shows detailed information about a specific routing table. |
 | — | `show route forwarding-table` | Displays the forwarding table. |
-| — | `show route best` | Shows the best routes in the routing table. |
+| — | `show route best <ip-address>` | Shows the longest-match route for one destination. |
 | — | `show route aspath-regex <as-path-regex>` | Displays routes matching a specific AS path regular expression. |
 | — | `show route community <community>` | Shows routes with a specific BGP community. |
-| — | `show route extensive` | Displays extensive route information. |
-| — | `show route filter <filter-name>` | Shows routes matching a specific route filter. |
-| — | `show route inactive` | Displays inactive routes in the routing table. |
+| — | `show route <prefix> extensive` | Displays every attribute for the routes to one prefix. |
+| — | `show route <prefix> longer` | Shows only prefixes at or under the given prefix. |
+| — | `show route inactive-path` | Displays routes present but not selected as active. |
 | — | `show route next-hop <next-hop-ip>` | Shows routes with a specific next-hop. |
 | — | `show route protocol <protocol>` | Displays routes learned from a specific protocol. |
 | — | `show route summary` | Provides a summary of the routing table. |

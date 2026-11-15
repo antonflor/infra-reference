@@ -10,60 +10,62 @@ Inspect protocols and routes before reloading configuration or disabling a proto
 
 ## Quick reference
 
-### BIRD Status and Protocol Management
+### Release notes
+
+Commands are for BIRD 2.x and 3.x, where one daemon and one `birdc` handle IPv4 and IPv6. BIRD 1.x used a separate `bird6`/`birdc6` pair. BIRD 3 is multithreaded and keeps the 2.x CLI with small output differences. `birdc -r` opens a restricted, read-only session, which is the safer default for inspection.
+
+### Status and protocols
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `birdc show status` | Displays the current status of the BIRD routing daemon. |
-| — | `birdc show protocols` | Lists all routing protocols configured in BIRD. |
-| — | `birdc show protocol <protocol-name>` | Shows detailed information about a specific routing protocol. |
-| `birdc show protocols` | `birdc configure` | Reloads the configuration file. **Caution:** Reloads configuration; inspect `birdc show status` and run `birdc configure check` first. |
-| — | `birdc configure check` | Checks the configuration file for errors without applying changes. |
-| `birdc show protocols` | `birdc disable <protocol-name>` | Temporarily disables a routing protocol. **Caution:** Disruptive: withdraws routes from this protocol. |
-| `birdc show protocols` | `birdc enable <protocol-name>` | Enables a previously disabled routing protocol. **Caution:** Activates a protocol and can change routing. |
-| `birdc show protocols` | `birdc restart <protocol-name>` | Restarts a specific routing protocol. **Caution:** Disruptive: restarts a routing protocol. |
-| — | `birdc log <message>` | Sends a custom log message to the BIRD log. |
-| — | `birdc show events` | Displays recent routing events. |
-| — | `birdc show symbols` | Lists all symbols (like route filters and functions) defined in the configuration. |
-| `birdc show protocols` | `birdc debug <protocol-name> <debug-options>` | Enables debugging for a specific protocol. **Caution:** Changes diagnostic state and can increase log volume. |
+| — | `birdc show status` | Daemon version, router ID, uptime, and last reconfiguration. |
+| — | `birdc show protocols` | One line per protocol instance with state and since-time. |
+| — | `birdc show protocols all <protocol-name>` | Detailed state, channels, and route counters for one instance. |
+| — | `birdc show interfaces summary` | Interfaces and addresses known to BIRD. |
+| — | `birdc show memory` | Memory usage by category. |
+| — | `birdc show symbols` | Lists configured names; add `table`, `filter`, or `protocol` to narrow. |
 
-### Route Display and Analysis
+### Configuration changes
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `birdc show route` | Displays the routing table managed by BIRD. |
-| — | `birdc show route protocol <protocol-name>` | Shows routes learned from a specific routing protocol. |
-| — | `birdc show route all` | Displays all routes in the routing table, including inactive ones. |
-| — | `birdc show route export <protocol-name>` | Shows routes exported by a specific protocol. |
-| — | `birdc show route where <condition>` | Displays routes matching a specific condition. |
-| — | `birdc show route for <ip-address>` | Shows the route for a specific IP address. |
+| — | `bird -p -c /etc/bird/bird.conf` | Parses a configuration file and exits without touching the running daemon. |
+| — | `birdc configure check` | Asks the running daemon to parse its configuration without applying it. |
+| `birdc configure check` | `birdc configure timeout 120` | Applies the configuration and reverts unless confirmed within 120 seconds. **Caution:** Changes routing; follow with `birdc configure confirm`. |
+| `birdc configure check` | `birdc configure` | Applies the configuration with no automatic revert. **Caution:** Changed protocols can restart. |
+| `birdc show status` | `birdc configure undo` | Returns to the previous configuration. **Caution:** Changes routing again. |
+| `birdc show protocols` | `birdc reload in <protocol-name>` | Re-evaluates import filters using route refresh, without a session reset. |
+| `birdc show protocols` | `birdc reload out <protocol-name>` | Re-evaluates export filters and re-advertises. |
+| `birdc show protocols` | `birdc disable <protocol-name>` | Shuts a protocol instance down. **Caution:** Disruptive: withdraws its routes. |
+| `birdc show protocols` | `birdc enable <protocol-name>` | Starts a disabled instance. **Caution:** Can change routing. |
+| `birdc show protocols` | `birdc restart <protocol-name>` | Restarts an instance. **Caution:** Disruptive: resets the session. |
+| `birdc show protocols` | `birdc debug <protocol-name> <all\|off\|states,routes,filters,events,packets>` | Changes protocol debug logging. **Caution:** Can produce large logs; turn it off afterwards. |
 
-### OSPF and BFD Sessions
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `birdc show ospf neighbors` | Lists OSPF neighbors. |
-| — | `birdc show ospf state` | Displays the OSPF internal state. |
-| — | `birdc show ospf interfaces` | Shows OSPF interfaces and their states. |
-| — | `birdc show ospf lsadb` | Displays the OSPF link-state database. |
-| — | `birdc show bfd sessions` | Lists BFD (Bidirectional Forwarding Detection) sessions. |
-
-### Memory Usage and Interface Information
+### Routes
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `birdc show memory` | Shows memory usage by the BIRD daemon. |
-| — | `birdc show interfaces` | Lists network interfaces known to BIRD. |
-| — | `birdc show sockets` | Shows active network sockets used by BIRD. |
+| — | `birdc show route` | Routes in the default tables. |
+| — | `birdc show route table <table-name>` | Routes in one table, such as `master4` or `master6`. |
+| — | `birdc show route for <ip-address>` | Longest-prefix match for an address. |
+| — | `birdc show route <prefix> all` | Every attribute of the routes for a prefix. |
+| — | `birdc show route protocol <protocol-name>` | Routes learned from one protocol instance. |
+| — | `birdc show route export <protocol-name>` | Routes that pass the export filter toward a protocol. |
+| — | `birdc show route noexport <protocol-name>` | Routes the export filter rejects. |
+| — | `birdc show route where <filter-expression>` | Routes matching an expression, such as `bgp_path.last = 64512`. |
+| — | `birdc show route count` | Route totals per table. |
 
-### Routing Tables and Filters
+### Protocol-specific state
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `birdc show tables` | Lists routing tables managed by BIRD. |
-| — | `birdc show static routes` | Displays static routes configured in BIRD. |
-| — | `birdc show filters` | Displays the configured route filters. |
-| — | `birdc show rip neighbors` | Lists RIP neighbors and their status. |
+| — | `birdc show ospf neighbors` | OSPF adjacencies and states. |
+| — | `birdc show ospf interface` | OSPF interfaces, areas, cost, and DR state. |
+| — | `birdc show ospf state` | Topology as seen by the link-state database. |
+| — | `birdc show ospf lsadb` | Link-state database contents. |
+| — | `birdc show bfd sessions` | BFD sessions, state, and intervals. |
+| — | `birdc show static` | Static routes and whether their next hops are usable. |
+| — | `birdc show rip neighbors` | RIP neighbors. |
 
 ## Troubleshooting workflow
 
@@ -77,3 +79,4 @@ Inspect protocols and routes before reloading configuration or disabling a proto
 ## Official references
 
 - [BIRD documentation](https://bird.network.cz/?get_doc)
+- [BIRD 2 remote control reference](https://bird.network.cz/?get_doc&v=20&f=bird-4.html)

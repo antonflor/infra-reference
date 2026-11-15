@@ -2,7 +2,7 @@
 
 > **Status:** Legacy reference — technical validation pending
 
-A reference for Puppet agent runs, manifests, modules, node management, and troubleshooting. The inherited examples span older Puppet tooling; confirm command availability for your installed release.
+A reference for Puppet agent runs, manifests, modules, node management, and troubleshooting. Examples target Puppet 7 and 8 and the compatible OpenVox releases; confirm command availability for your installed release.
 
 ## Safety
 
@@ -10,53 +10,59 @@ Confirm the node and environment before applying a catalog. An agent test run ca
 
 ## Quick reference
 
-### System Checks and Operations
+### Release and packaging notes
+
+- These commands target Puppet 7 and 8. `puppet cert` and `puppet master` were removed in Puppet 6; certificate work moved to `puppetserver ca` and catalog compilation to `puppet catalog compile`.
+- Perforce no longer publishes open-source Puppet packages; current Perforce builds ship as Puppet Core or Puppet Enterprise under a commercial agreement. OpenVox is the community-maintained, Apache-2.0 continuation and keeps the same `puppet` command, language, and `/etc/puppetlabs` layout.
+- `puppet node purge` and PuppetDB export or import are Puppet Enterprise or PuppetDB-client commands and are absent from a plain agent install.
+
+### Agent runs
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| `puppet config print` | `puppet agent --test` | Runs a Puppet agent manually and applies the latest configuration. **Caution:** Applies a catalog and can change files, packages, and services. |
-| `puppet config print` | `puppet agent --enable` | Enables the Puppet agent if it's been disabled. **Caution:** Resumes automatic catalog application. |
-| `puppet config print` | `puppet agent --disable` | Temporarily disables the Puppet agent. **Caution:** Suspends automatic configuration enforcement. |
-| — | `puppet config print <setting>` | Prints the value of a Puppet configuration setting. |
+| — | `puppet config print <setting> --section agent` | Prints the effective value of a setting. |
+| — | `puppet agent --test --noop` | Compiles and reports what would change without applying it. |
+| `puppet agent --test --noop` | `puppet agent --test` | Runs the agent once in the foreground. **Caution:** Applies the catalog and can change files, packages, and services. |
+| `puppet agent --test --noop` | `puppet agent --test --environment <environment>` | Runs once against another environment. **Caution:** Applies that environment's catalog. |
+| — | `puppet agent --disable "<reason>"` | Pauses agent runs and records why. **Caution:** Suspends configuration enforcement until re-enabled. |
+| `puppet agent --test --noop` | `puppet agent --enable` | Resumes agent runs. **Caution:** The next run applies any pending catalog changes. |
+| — | `puppet agent --test --debug` | Runs once with debug output. **Caution:** Still applies the catalog; add `--noop` to inspect only. |
 
-### Managing Puppet Code and Environments
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| `puppet config print` | `puppet apply <manifest.pp>` | Applies a standalone Puppet manifest to the local system. **Caution:** Applies a manifest to the local host. |
-| `puppet config print` | `puppet module install <module-name>` | Installs a module from the Puppet Forge. **Caution:** Changes installed modules. |
-| — | `puppet module list` | Lists installed modules. |
-| `puppet config print` | `puppet module upgrade <module-name>` | Upgrades a module to the latest version. **Caution:** Changes module versions and subsequent catalogs. |
-| — | `puppet environment list` | Lists all available environments. |
-
-### Node and Resource Management
+### Code, modules, and data
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `puppet resource <resource-type> <resource-title>` | Manages a resource. |
-| — | `puppet resource service` | Lists all services known to Puppet. |
-| — | `puppet cert list` | Lists all pending certificate signing requests. |
-| `puppet config print` | `puppet cert sign <certname>` | Signs a pending certificate request. **Caution:** Trusts a node certificate; verify the fingerprint and node identity. |
-| `puppet config print` | `puppet node purge <node-name>` | Completely removes a node from PuppetDB and cleans up exported resources. **Caution:** Destructive: removes the node and exported resources. |
+| — | `puppet parser validate <manifest.pp>` | Checks manifest syntax. |
+| `puppet apply --noop <manifest.pp>` | `puppet apply <manifest.pp>` | Applies a standalone manifest locally. **Caution:** Changes the local host. |
+| — | `puppet module list --tree` | Lists installed modules and dependencies. |
+| `puppet module list` | `puppet module install <author>-<module> --version <version>` | Installs a Forge module. **Caution:** Changes the modulepath; environments managed by r10k or Code Manager should change the `Puppetfile` instead. |
+| `puppet module list` | `puppet module upgrade <author>-<module>` | Upgrades a module. **Caution:** Changes subsequent catalogs. |
+| — | `puppet lookup <key> --node <certname> --environment <environment> --explain` | Resolves a Hiera key and shows which layer supplied it. |
+| — | `puppet catalog compile <certname> --environment <environment>` | Compiles a catalog on the server without applying it. |
 
-### Misc Puppet Tasks
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `puppet db export <file.tar.gz>` | Exports PuppetDB data to a file. |
-| `puppet config print` | `puppet db import <file.tar.gz>` | Imports data into PuppetDB from a file. **Caution:** Changes PuppetDB data; preserve a verified backup first. |
-| — | `puppet lookup <key> --node <node-name> --environment <environment>` | Looks up data in Hiera. |
-| — | `puppet parser validate <manifest.pp>` | Validates the syntax of a Puppet manifest. |
-| — | `puppet report show <report>` | Displays a specific report from PuppetDB. |
-
-### Debugging and Troubleshooting
+### Resources and facts
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `puppet agent --debug` | Runs the agent in debug mode for verbose output. |
-| — | `puppet agent --fingerprint` | Prints the certificate fingerprint. |
-| — | `puppet master --compile <node-name>` | Compiles a catalog for a specific node. |
-| — | `puppet facts find <node-name>` | Retrieves facts from a specified node. |
+| — | `puppet resource <type> <title>` | Shows the current state of a resource as Puppet code. |
+| — | `puppet resource service` | Lists services known to the service provider. |
+| `puppet resource <type> <title>` | `puppet resource <type> <title> <attribute>=<value>` | Changes a resource immediately. **Caution:** Bypasses the catalog; the next agent run may revert it. |
+| — | `puppet facts show` | Prints local facts. |
+| — | `facter <fact>` | Prints one fact, such as `facter os.release`. |
+
+### Certificates
+
+Run `puppetserver ca` on the CA server. Run `puppet ssl` on the agent.
+
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `puppetserver ca list` | Lists pending certificate requests. |
+| — | `puppetserver ca list --all` | Lists signed, revoked, and pending certificates. |
+| `puppetserver ca list` | `puppetserver ca sign --certname <certname>` | Signs a pending request. **Caution:** Trusts the node; compare the fingerprint with `puppet agent --fingerprint` on the agent first. |
+| `puppetserver ca list --all` | `puppetserver ca clean --certname <certname>` | Revokes and removes a node certificate. **Caution:** The node cannot check in until it is re-enrolled. |
+| — | `puppet agent --fingerprint` | Prints the agent certificate or request fingerprint. |
+| — | `puppet ssl verify` | Checks that the agent's certificate, key, and CA chain are usable. |
+| `puppet ssl verify` | `puppet ssl clean` | Deletes the agent's local certificates. **Caution:** Requires a new signing on the CA. |
 
 ## Troubleshooting workflow
 
@@ -70,3 +76,4 @@ Confirm the node and environment before applying a catalog. An agent test run ca
 ## Official references
 
 - [Puppet Core documentation](https://help.puppet.com/core/current/content/puppetcore/puppet_index.htm)
+- [OpenVox project](https://voxpupuli.org/openvox/)

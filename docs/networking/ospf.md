@@ -23,7 +23,7 @@ Imagine OSPF as a GPS system for network data packets. Just like a GPS finds the
 
 ### Key Components of OSPF
 
-- **Router ID**: A unique identifier for each router participating in OSPF. Typically the highest IP address on a loopback interface.
+- **Router ID**: A unique 32-bit identifier for each router. Set it explicitly; otherwise it defaults to the highest loopback address, then the highest active interface address.
 - **Area**: A logical grouping of networks and routers. OSPF calculations are performed within an area. Area 0 is the backbone area.
 - **Link-State Advertisement (LSA)**: OSPF messages that contain information about neighbors and network topology.
 - **Link-State Database (LSDB)**: A database containing all LSAs. Each OSPF router within the same area maintains an identical copy.
@@ -61,7 +61,7 @@ Imagine OSPF as a GPS system for network data packets. Just like a GPS finds the
   ```
 
 - **Enabling OSPF (Juniper Junos)**
-  Inspect `show ip ospf neighbor`, `show ip ospf interface`, and the relevant running configuration before applying changes.
+  Inspect `show ospf neighbor`, `show ospf interface`, and `show configuration protocols ospf` before applying changes; review with `show | compare` and use `commit confirmed`.
 
 ```text
   set protocols ospf area <area-id> interface <interface-name>
@@ -111,7 +111,7 @@ Imagine OSPF as a GPS system for network data packets. Just like a GPS finds the
 
 ```text
   router ospf <process-id>
-   default-information originate <always>
+   default-information originate [always]
   ```
 
 ### Useful Show Commands
@@ -133,6 +133,17 @@ Imagine OSPF as a GPS system for network data packets. Just like a GPS finds the
 | `show ip ospf virtual-links` | Displays OSPF virtual link configurations |
 | `debug ip ospf events` | Enables OSPF event debugging |
 | `debug ip ospf adj` | Debugs OSPF adjacency formation |
+
+Equivalent first checks on other platforms:
+
+| Platform | Neighbors | Interfaces | Database |
+|---|---|---|---|
+| Junos | `show ospf neighbor` | `show ospf interface` | `show ospf database` |
+| Arista EOS | `show ip ospf neighbor` | `show ip ospf interface brief` | `show ip ospf database` |
+| BIRD | `birdc show ospf neighbors` | `birdc show ospf interface` | `birdc show ospf lsadb` |
+| FRRouting | `vtysh -c "show ip ospf neighbor"` | `vtysh -c "show ip ospf interface"` | `vtysh -c "show ip ospf database"` |
+
+Adjacencies stuck in `ExStart` or `Exchange` usually indicate an MTU mismatch; stuck in `Init` points to one-way hellos, an ACL, or an authentication mismatch; stuck in `2-Way` is normal between two non-DR routers on a broadcast segment.
 
 ### OSPF Neighbor States
 
@@ -158,9 +169,11 @@ Imagine OSPF as a GPS system for network data packets. Just like a GPS finds the
 - **Authentication**: OSPF supports multiple authentication types to secure routing information:
   - None (default — not recommended in production)
   - Simple (plaintext password — weak)
-  - MD5 (cryptographic hash — recommended)
-  - SHA (supported in OSPFv3 for IPv6)
-  - Configure MD5 (Cisco):
+  - MD5 (cryptographic hash — widely deployed, but no longer considered strong; keep only for interoperability)
+  - HMAC-SHA for OSPFv2 (RFC 5709, configured through a key chain on current IOS XE, EOS, and Junos — preferred)
+  - OSPFv3 authentication trailer (RFC 7166) or IPsec
+  - Configure HMAC-SHA with a key chain (Cisco IOS XE): `ip ospf authentication key-chain <key-chain-name>` on the interface, with `cryptographic-algorithm hmac-sha-256` under the key.
+  - Configure MD5 (Cisco, legacy):
     Inspect `show ip ospf neighbor`, `show ip ospf interface`, and the relevant running configuration before applying changes.
 
 ```text
@@ -195,4 +208,5 @@ Imagine OSPF as a GPS system for network data packets. Just like a GPS finds the
 ## Official references
 
 - [RFC 2328: OSPF Version 2](https://www.rfc-editor.org/rfc/rfc2328)
+- [RFC 5709: OSPFv2 HMAC-SHA Cryptographic Authentication](https://www.rfc-editor.org/rfc/rfc5709)
 - [Cisco IOS XE documentation](https://www.cisco.com/c/en/us/support/ios-nx-os-software/ios-xe/tsd-products-support-series-home.html)

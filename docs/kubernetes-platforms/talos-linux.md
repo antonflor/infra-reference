@@ -1,7 +1,7 @@
 # Talos Linux Cheat Sheet
 
-> **Applies to:** Talos Linux 1.13 and `talosctl` 1.13
-> **Last reviewed:** 2026-07-18
+> **Applies to:** Talos Linux 1.14 and `talosctl` 1.14
+> **Last reviewed:** 2026-11-14
 
 A practical operational reference for installing, configuring, inspecting, upgrading, backing up, and recovering Kubernetes nodes running Talos Linux.
 
@@ -198,6 +198,13 @@ talosctl logs etcd
 talosctl logs kubelet --follow
 ```
 
+Talos 1.14 adds `--namespace` to `logs`, `containers`, `stats`, and `restart` (`system` by default, `cri` for Kubernetes workloads). The older `--kubernetes`/`-k` flag is deprecated:
+
+```bash
+talosctl containers --namespace cri
+talosctl logs --namespace cri <container-id-from-the-list-above>
+```
+
 Inspect kernel messages:
 
 ```bash
@@ -213,7 +220,7 @@ talosctl support \
   --output talos-support.zip
 ```
 
-Support bundles can contain network topology, workload metadata, logs, and infrastructure details. Sanitize them before sharing outside the organization.
+Support bundles can contain network topology, workload metadata, logs, and infrastructure details. Sanitize them before sharing outside the organization. From Talos 1.14 the bundle is encrypted with `age`, by default to Sidero Labs recipients; supply your own recipients when the archive is for internal analysis.
 
 ### Inspect configuration and runtime resources
 
@@ -260,7 +267,7 @@ talosctl apply-config \
   --file <machine-config.yaml>
 ```
 
-Useful application modes include `auto`, `no-reboot`, `reboot`, `staged`, and `try`.
+Useful application modes include `auto`, `no-reboot`, `staged`, and `try`. Talos 1.14 removed `--mode=reboot`: configuration is applied live, and a change that needs a restart is followed by an explicit, drained `talosctl reboot`.
 
 ```bash
 talosctl apply-config \
@@ -269,6 +276,8 @@ talosctl apply-config \
   --mode try \
   --timeout 2m
 ```
+
+Machine configuration is moving from the monolithic `v1alpha1` document to focused multi-document kinds. In 1.14 many `.cluster.*` and `.machine.*` fields (API server, kubelet, sysctls, kernel modules, install, discovery) are deprecated in favor of kinds such as `KubeAPIServerConfig`, `KubeletConfig`, `SysctlConfig`, `KernelModuleConfig`, and `UnattendedInstallConfig`. The old fields still work, but some old/new pairs are rejected when both are set; check the release notes before mixing them in patches.
 
 > [!WARNING]
 > A machine configuration is the source of truth for the node. Avoid interactive one-off edits that are not reflected in Git or the configuration-generation workflow.
@@ -298,6 +307,8 @@ A typical upgrade image follows this pattern:
 factory.talos.dev/metal-installer/<schematic-id>:<talos-version>
 ```
 
+Since Talos 1.14 the default installer comes from Image Factory; `ghcr.io/siderolabs/installer` is no longer published with releases, so update any automation that still pins it.
+
 Use the same intended schematic across installation media and the installer image so nodes do not unexpectedly lose required extensions during installation or upgrade.
 
 ### Upgrade Talos Linux
@@ -322,13 +333,20 @@ talosctl upgrade \
 
 Operational sequence:
 
-1. Confirm the supported upgrade path.
+1. Confirm the supported upgrade path and read the target release notes for changed defaults.
 2. Confirm a recent etcd backup.
 3. Upgrade one control-plane node at a time.
 4. Wait for the node, etcd, and Kubernetes to become healthy.
 5. Continue with remaining control-plane nodes.
 6. Upgrade workers in controlled batches.
 7. Run a full post-upgrade validation.
+
+Behavior changes to plan for when moving to 1.14:
+
+- etcd metrics, health, and the JSON gateway move to port 2383; port 2379 is gRPC only. Update scrapes and firewall rules.
+- etcd and kube-apiserver require TLS 1.3 as a minimum.
+- New clusters generated with 1.14 enable workload isolation (`SecurityProfileConfig`) and a weekly filesystem trim. Upgraded clusters keep the old behavior until those documents are added.
+- Workload isolation breaks the in-tree iSCSI volume plugin; use a CSI driver.
 
 > [!DANGER]
 > Never upgrade multiple control-plane nodes simultaneously without proving that etcd quorum remains available.
@@ -408,6 +426,8 @@ Reset a machine:
 talosctl reset --nodes <node>
 ```
 
+A cluster with a dedicated `ETCD` volume keeps etcd data when only `EPHEMERAL` is wiped; include that volume when the member must be rebuilt from scratch.
+
 Reset selected Talos partitions instead of every disk:
 
 ```bash
@@ -485,9 +505,9 @@ After identifying the cause, apply the least disruptive correction and verify th
 ## Official references
 
 - [Talos Linux documentation](https://docs.siderolabs.com/talos)
-- [Talos Linux 1.13 CLI reference](https://docs.siderolabs.com/talos/v1.13/reference/cli)
-- [Talos Linux getting started](https://docs.siderolabs.com/talos/v1.13/getting-started/getting-started)
-- [Image Factory](https://docs.siderolabs.com/talos/v1.13/learn-more/image-factory)
-- [Talos logging](https://docs.siderolabs.com/talos/v1.13/configure-your-talos-cluster/logging-and-telemetry/logging)
-- [Resetting a machine](https://docs.siderolabs.com/talos/v1.13/configure-your-talos-cluster/lifecycle-management/resetting-a-machine)
-- [Secure Boot](https://docs.siderolabs.com/talos/v1.13/platform-specific-installations/bare-metal-platforms/secureboot)
+- [Talos Linux 1.14 CLI reference](https://docs.siderolabs.com/talos/v1.14/reference/cli)
+- [Talos Linux getting started](https://docs.siderolabs.com/talos/v1.14/getting-started/getting-started)
+- [Image Factory](https://docs.siderolabs.com/talos/v1.14/learn-more/image-factory)
+- [Talos logging](https://docs.siderolabs.com/talos/v1.14/configure-your-talos-cluster/logging-and-telemetry/logging)
+- [Resetting a machine](https://docs.siderolabs.com/talos/v1.14/configure-your-talos-cluster/lifecycle-management/resetting-a-machine)
+- [Secure Boot](https://docs.siderolabs.com/talos/v1.14/platform-specific-installations/bare-metal-platforms/secureboot)

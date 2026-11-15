@@ -10,53 +10,70 @@ Inspect configuration, backend health, and current sessions before runtime chang
 
 ## Quick reference
 
-### Service Status and Configuration
+### Runtime API access
+
+The examples use `/run/haproxy/admin.sock`, the Debian and Ubuntu package default. Check the `stats socket` line in the `global` section for the real path and make sure it is declared with `level admin` before using commands that change state. Set it once:
+
+```bash
+SOCK=/run/haproxy/admin.sock
+echo "help" | sudo socat stdio "$SOCK"
+```
+
+`help` lists the commands the running release supports; the set differs between major versions.
+
+### Service status and configuration
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `sudo systemctl status haproxy` | Checks the current status of the HAProxy service. |
-| — | `sudo haproxy -c -V -f /etc/haproxy/haproxy.cfg` | Validates the HAProxy configuration file for syntax errors. |
-| — | `sudo haproxy -vv` | Displays HAProxy version and build options. |
+| — | `sudo systemctl status haproxy` | Shows service state. |
+| — | `sudo haproxy -c -f /etc/haproxy/haproxy.cfg` | Validates the configuration file. |
+| — | `haproxy -vv` | Shows version, build options, and compiled-in features. |
+| `sudo haproxy -c -f /etc/haproxy/haproxy.cfg` | `sudo systemctl reload haproxy` | Loads new configuration with a seamless reload. **Caution:** Runtime API changes not written to the file are lost. |
+| — | `journalctl -u haproxy -f` | Follows logs (or the file your syslog rule writes, commonly `/var/log/haproxy.log`). |
 
-### Monitoring and Statistics
-
-| Inspect first | Command | Effect / caution |
-|---|---|---|
-| — | `echo "show info" \| sudo socat stdio /var/run/haproxy.sock` | Displays general information about the running HAProxy instance. |
-| — | `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | Shows statistics for all servers and frontends. |
-| — | `echo "show errors" \| sudo socat stdio /var/run/haproxy.sock` | Displays recent HTTP errors and their details. |
-| — | `tail -f /var/log/haproxy.log` | Continuously monitors the HAProxy log file. |
-| — | `echo "show rate" \| sudo socat stdio /var/run/haproxy.sock` | Displays the current session rate. |
-
-### Session and Backend Management
+### Monitoring and statistics
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| — | `echo "show sess" \| sudo socat stdio /var/run/haproxy.sock` | Lists currently active sessions. |
-| — | `echo "show backend" \| sudo socat stdio /var/run/haproxy.sock` | Lists available backends and their status. |
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "disable server <backend>/<server>" \| sudo socat stdio /var/run/haproxy.sock` | Temporarily disables a server in a backend. **Caution:** Changes live traffic placement. |
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "enable server <backend>/<server>" \| sudo socat stdio /var/run/haproxy.sock` | Re-enables a previously disabled server. **Caution:** Returns a server to traffic handling. |
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "set weight <backend>/<server> <weight>" \| sudo socat stdio /var/run/haproxy.sock` | Changes the weight of a server in load balancing. **Caution:** Changes live traffic distribution. |
-| — | `echo "get weight <backend>/<server>" \| sudo socat stdio /var/run/haproxy.sock` | Displays the current weight of a server. |
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "shutdown session <session-id>" \| sudo socat stdio /var/run/haproxy.sock` | Forcefully terminates a session. **Caution:** Disruptive: terminates an active session; inspect `show sess` first. |
+| — | `echo "show info" \| sudo socat stdio "$SOCK"` | Process-wide information: uptime, connections, rates, limits. |
+| — | `echo "show stat" \| sudo socat stdio "$SOCK"` | CSV statistics for every frontend, backend, and server. |
+| — | `echo "show servers state <backend>" \| sudo socat stdio "$SOCK"` | Operational and administrative state of each server. |
+| — | `echo "show backend" \| sudo socat stdio "$SOCK"` | Lists backend names. |
+| — | `echo "show errors" \| sudo socat stdio "$SOCK"` | Last captured invalid request or response per proxy. |
+| — | `echo "show sess" \| sudo socat stdio "$SOCK"` | Lists active streams. |
+| — | `echo "show table" \| sudo socat stdio "$SOCK"` | Lists stick-tables; add a table name to dump entries. |
+| — | `echo "show resolvers" \| sudo socat stdio "$SOCK"` | DNS resolver statistics. |
+| — | `echo "show ssl cert" \| sudo socat stdio "$SOCK"` | Lists loaded certificates; add a filename for details and expiry. |
 
-### Management and Debugging
+### Server and traffic changes
 
 | Inspect first | Command | Effect / caution |
 |---|---|---|
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "clear counters" \| sudo socat stdio /var/run/haproxy.sock` | Clears all counters in the proxy (does not reset current sessions). **Caution:** Removes diagnostic evidence; capture `show stat` first. |
-| — | `echo "show table" \| sudo socat stdio /var/run/haproxy.sock` | Displays stick-tables and their contents. |
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "clear table <table>" \| sudo socat stdio /var/run/haproxy.sock` | Clears a specific stick-table. **Caution:** Destructive: removes stick-table entries; inspect `show table` first. |
-| — | `echo "show health" \| sudo socat stdio /var/run/haproxy.sock` | Displays health check details. |
-| — | `echo "show map <map>" \| sudo socat stdio /var/run/haproxy.sock` | Displays the content of a map file. |
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "add map <map> <key> <value>" \| sudo socat stdio /var/run/haproxy.sock` | Adds an entry to a map file. **Caution:** Changes live mapping behavior; inspect the map first. |
-| `echo "show stat" \| sudo socat stdio /var/run/haproxy.sock` | `echo "del map <map> <key>" \| sudo socat stdio /var/run/haproxy.sock` | Deletes an entry from a map file. **Caution:** Destructive: removes a live mapping; inspect the map first. |
-| — | `echo "show resolvers" \| sudo socat stdio /var/run/haproxy.sock` | Displays details of DNS resolvers. |
-| — | `echo "show tls-keys" \| sudo socat stdio /var/run/haproxy.sock` | Lists TLS keys. |
-| — | `echo "show threads" \| sudo socat stdio /var/run/haproxy.sock` | Displays information about HAProxy threads. |
-| — | `echo "show pools" \| sudo socat stdio /var/run/haproxy.sock` | Shows memory pool usage. |
-| — | `echo "show fd" \| sudo socat stdio /var/run/haproxy.sock` | Displays file descriptor usage. |
-| — | `echo "show runtime errors" \| sudo socat stdio /var/run/haproxy.sock` | Lists runtime errors since last boot. |
+| `show servers state <backend>` | `echo "set server <backend>/<server> state drain" \| sudo socat stdio "$SOCK"` | Stops new connections while existing ones finish. **Caution:** Shifts traffic to the remaining servers. |
+| `show servers state <backend>` | `echo "set server <backend>/<server> state maint" \| sudo socat stdio "$SOCK"` | Takes a server out of rotation (same as `disable server`). **Caution:** Disruptive for that server's sessions. |
+| `show servers state <backend>` | `echo "set server <backend>/<server> state ready" \| sudo socat stdio "$SOCK"` | Returns a server to rotation (same as `enable server`). |
+| `echo "get weight <backend>/<server>"` | `echo "set weight <backend>/<server> <weight>" \| sudo socat stdio "$SOCK"` | Changes a server's weight. **Caution:** Changes live traffic distribution. |
+| `show sess` | `echo "shutdown session <session-id>" \| sudo socat stdio "$SOCK"` | Terminates one stream. **Caution:** Disruptive for that client. |
+| `show sess` | `echo "shutdown sessions server <backend>/<server>" \| sudo socat stdio "$SOCK"` | Terminates every stream on a server. **Caution:** Disruptive. |
+
+### Maps, tables, and counters
+
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `echo "show map" \| sudo socat stdio "$SOCK"` | Lists maps with their IDs; add `#<id>` or a path to dump entries. |
+| `show map <map>` | `echo "add map <map> <key> <value>" \| sudo socat stdio "$SOCK"` | Adds a map entry. **Caution:** Changes live routing decisions and is not written to the file. |
+| `show map <map>` | `echo "del map <map> <key>" \| sudo socat stdio "$SOCK"` | Removes a map entry. **Caution:** Destructive for that mapping. |
+| `show table <table>` | `echo "clear table <table> key <key>" \| sudo socat stdio "$SOCK"` | Removes one stick-table entry. **Caution:** Without `key` or a filter it clears the whole table. |
+| `show stat` | `echo "clear counters" \| sudo socat stdio "$SOCK"` | Resets max counters (`clear counters all` resets everything). **Caution:** Removes diagnostic evidence; save `show stat` first. |
+
+### Process diagnostics
+
+| Inspect first | Command | Effect / caution |
+|---|---|---|
+| — | `echo "show threads" \| sudo socat stdio "$SOCK"` | Per-thread state, useful for stuck-thread reports. |
+| — | `echo "show pools" \| sudo socat stdio "$SOCK"` | Memory pool usage. |
+| — | `echo "show fd" \| sudo socat stdio "$SOCK"` | Open file descriptors and their owners. |
+| — | `echo "show activity" \| sudo socat stdio "$SOCK"` | Per-thread scheduler and polling counters. |
 
 ## Troubleshooting workflow
 
@@ -70,3 +87,4 @@ Inspect configuration, backend health, and current sessions before runtime chang
 ## Official references
 
 - [HAProxy documentation](https://www.haproxy.org/#docs)
+- [HAProxy Management Guide](https://docs.haproxy.org/)

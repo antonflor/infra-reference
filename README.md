@@ -35,6 +35,7 @@ The diagrams are intentionally limited to concepts where visual relationships im
 
 | Topic | Reference |
 |---|---|
+| BGP | [docs/networking/bgp.md](docs/networking/bgp.md) |
 | Clos fabrics | [docs/networking/clos.md](docs/networking/clos.md) |
 | Leaf-spine design | [docs/networking/leaf-spine.md](docs/networking/leaf-spine.md) |
 | LLDP | [docs/networking/lldp.md](docs/networking/lldp.md) |
@@ -102,11 +103,12 @@ The diagrams are intentionally limited to concepts where visual relationships im
 | HAProxy | [docs/linux/haproxy.md](docs/linux/haproxy.md) |
 | iptables | [docs/linux/iptables.md](docs/linux/iptables.md) |
 | Linux boot and kernel | [docs/linux/linux-boot.md](docs/linux/linux-boot.md) |
+| nftables | [docs/linux/nftables.md](docs/linux/nftables.md) |
 | nmap | [docs/linux/nmap.md](docs/linux/nmap.md) |
 | Regular expressions | [docs/linux/regex.md](docs/linux/regex.md) |
 | SCP | [docs/linux/scp.md](docs/linux/scp.md) |
 | sed | [docs/linux/sed.md](docs/linux/sed.md) |
-| XenServer (`xe`) | [docs/linux/xen.md](docs/linux/xen.md) |
+| XenServer and XCP-ng (`xe`) | [docs/linux/xen.md](docs/linux/xen.md) |
 
 ## High availability
 

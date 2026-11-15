@@ -362,6 +362,9 @@ diagnose vpn ike gateway flush name <phase1-name>
 
 #### SSL VPN
 
+> [!WARNING]
+> FortiOS 7.6.3 removed SSL VPN tunnel mode from every FortiGate model, and the change carries into FortiOS 8.0. Existing tunnel-mode settings and their firewall policies are dropped on upgrade, not converted. Migrate remote access to IPsec (IKEv2, optionally over TCP 443) or ZTNA before upgrading. The former web mode continues as Agentless VPN on supported models; 2 GB RAM models lost both modes in 7.6.0. The commands below apply to FortiOS 7.4 and earlier 7.6 builds only.
+
 ```text
 # Configure SSL VPN portal
 # Inspect current configuration before editing; preserve a rollback copy
